@@ -43,10 +43,17 @@ namespace Tomany.TaskManagement
                 UpdateStatus($"Welcome, {result.Username}!");
                 
                 // Navigate based on role
-                if (result.Role?.ToLower() == "admin")
+                var role = result.Role?.ToLower() ?? string.Empty;
+                if (role == "admin")
                 {
                     var adminWindow = new AdminWindow(result.AccountId ?? 0, result.Username ?? string.Empty);
                     adminWindow.Show();
+                    this.Close();
+                }
+                else if (role == "manager")
+                {
+                    var managerWindow = new ManagerWindow(result.AccountId ?? 0, result.Username ?? string.Empty);
+                    managerWindow.Show();
                     this.Close();
                 }
                 else
