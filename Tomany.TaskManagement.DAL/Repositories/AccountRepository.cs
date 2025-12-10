@@ -1,5 +1,8 @@
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Tomany.TaskManagement.DAL.Models;
+using Account = Tomany.TaskManagement.DAL.Models.Account;
+using Profile = Tomany.TaskManagement.DAL.Models.Profile;
+using TaskManagementContext = Tomany.TaskManagement.DAL.Models.TaskManagementContext;
 
 namespace Tomany.TaskManagement.DAL.Repositories;
 
@@ -12,12 +15,12 @@ public class AccountRepository : IAccountRepository
         _context = context;
     }
 
-    public async System.Threading.Tasks.Task<bool> UsernameExistsAsync(string username)
+    public async Task<bool> UsernameExistsAsync(string username)
     {
         return await _context.Accounts.AnyAsync(a => a.Username == username);
     }
 
-    public async System.Threading.Tasks.Task<int> CreateAccountWithProfileAsync(Account account, Profile profile)
+    public async Task<int> CreateAccountWithProfileAsync(Account account, Profile profile)
     {
         _context.Accounts.Add(account);
         await _context.SaveChangesAsync();
@@ -29,32 +32,32 @@ public class AccountRepository : IAccountRepository
         return account.AccountId;
     }
 
-    public async System.Threading.Tasks.Task<Account?> AuthenticateAsync(string username, string password)
+    public async Task<Account?> AuthenticateAsync(string username, string password)
     {
         var account = await _context.Accounts
             .FirstOrDefaultAsync(a => a.Username == username && a.Password == password);
         return account;
     }
 
-    public async System.Threading.Tasks.Task<Profile?> GetProfileAsync(int accountId)
+    public async Task<Profile?> GetProfileAsync(int accountId)
     {
         return await _context.Profiles.AsNoTracking()
             .FirstOrDefaultAsync(p => p.AccountId == accountId);
     }
 
-    public async System.Threading.Tasks.Task UpdateProfileAsync(Profile profile)
+    public async Task UpdateProfileAsync(Profile profile)
     {
         _context.Profiles.Update(profile);
         await _context.SaveChangesAsync();
     }
 
-    public async System.Threading.Tasks.Task<bool> CheckPasswordAsync(int accountId, string currentPassword)
+    public async Task<bool> CheckPasswordAsync(int accountId, string currentPassword)
     {
         return await _context.Accounts.AnyAsync(a =>
             a.AccountId == accountId && a.Password == currentPassword);
     }
 
-    public async System.Threading.Tasks.Task<bool> UpdatePasswordAsync(int accountId, string newPassword)
+    public async Task<bool> UpdatePasswordAsync(int accountId, string newPassword)
     {
         var account = await _context.Accounts.FirstOrDefaultAsync(a => a.AccountId == accountId);
         if (account == null)

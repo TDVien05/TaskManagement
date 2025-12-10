@@ -1,10 +1,10 @@
 using System;
+using System.Threading.Tasks;
 using System.Windows;
 using Tomany.TaskManagement.BLL.Models;
 using Tomany.TaskManagement.BLL.Services;
-using Tomany.TaskManagement.DAL.Models;
 using Tomany.TaskManagement.DAL.Repositories;
-using SystemTask = System.Threading.Tasks.Task;
+using TaskManagementContext = Tomany.TaskManagement.DAL.Models.TaskManagementContext;
 
 namespace Tomany.TaskManagement
 {
@@ -94,7 +94,7 @@ namespace Tomany.TaskManagement
             ApplyProfileToForm();
         }
 
-        private async SystemTask LoadProfileAsync()
+        private async Task LoadProfileAsync()
         {
             var result = await _profileService.GetProfileAsync(AccountId);
             if (result.Success && result.Data != null)
