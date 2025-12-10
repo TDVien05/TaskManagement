@@ -14,31 +14,15 @@ namespace Tomany.TaskManagement
         public RegisterWindow()
         {
             InitializeComponent();
-            var dbContext = new Tomany.TaskManagement.DAL.Models.TaskManagementContext();
-            var accountRepo = new Tomany.TaskManagement.DAL.Repositories.AccountRepository(dbContext);
-            _accountService = new AccountService(accountRepo);
+            _accountService = ServiceFactory.CreateAccountService();
             
-            // Configure email service (update these with your SMTP credentials)
             var smtpSettings = GetSmtpSettings();
-            var emailService = smtpSettings != null ? new EmailService(smtpSettings) : null;
-            _otpService = new OtpService(emailService);
+            var emailService = ServiceFactory.CreateEmailService(smtpSettings);
+            _otpService = ServiceFactory.CreateOtpService(emailService);
         }
 
         private SmtpSettings? GetSmtpSettings()
         {
-            // TODO: Configure your SMTP settings here
-            // For Gmail, you need to:
-            // 1. Enable "Less secure app access" or use App Password
-            // 2. Replace with your Gmail credentials
-            
-            // Example for Gmail:
-            // return new SmtpSettings(
-            //     username: "your-email@gmail.com",
-            //     password: "your-app-password",
-            //     fromEmail: "your-email@gmail.com"
-            // );
-            
-            // Return null to disable email sending (will show OTP in MessageBox)
             return new SmtpSettings(
                 username: "vientruongdoan@gmail.com",
                 password: "grku ryyd ldsr gjov",

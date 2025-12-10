@@ -31,8 +31,9 @@ namespace Tomany.TaskManagement
 
         private void TasksButton_Click(object sender, RoutedEventArgs e)
         {
-            ContentTitleTextBlock.Text = "Manage Tasks";
-            ContentTextBlock.Text = "Task management functionality will be implemented here.\n\nYou can:\n- View all tasks in your projects\n- Create new tasks\n- Assign tasks to team members\n- Update task status\n- Set task priorities\n- Track task progress";
+            var taskBoardWindow = new TaskBoardWindow(AccountId, "Manager", this);
+            taskBoardWindow.Show();
+            this.Hide();
         }
 
         private void TeamButton_Click(object sender, RoutedEventArgs e)
