@@ -12,4 +12,10 @@
     <ProjectReference Include="..\Tomany.TaskManagement.BLL\Tomany.TaskManagement.BLL.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
