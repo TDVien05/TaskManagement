@@ -1,4 +1,7 @@
+using System.Collections.Generic;
+using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using Tomany.TaskManagement.BLL.Models;
 using Tomany.TaskManagement.DAL.Models;
 using Tomany.TaskManagement.DAL.Repositories;
@@ -12,6 +15,22 @@ public class AccountService
     public AccountService(IAccountRepository accountRepository)
     {
         _accountRepository = accountRepository;
+    }
+
+    public async Task<IEnumerable<ProfileDto>> GetAllAsync()
+    {
+        var accounts = await _accountRepository.GetAllWithProfilesAsync();
+        return accounts.Select(a => new ProfileDto
+        {
+            AccountId = a.AccountId,
+            Username = a.Username,
+            Role = a.Role,
+            FirstName = a.Profile?.FirstName,
+            LastName = a.Profile?.LastName,
+            Email = a.Profile?.Email,
+            PhoneNumber = a.Profile?.PhoneNumber,
+            DateOfBirth = a.Profile?.DateOfBirth
+        }).ToList();
     }
 
     public RegisterResult ValidateRequest(RegisterRequest request)

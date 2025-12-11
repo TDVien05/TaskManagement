@@ -1,15 +1,30 @@
+using System;
 using System.Windows;
+using Tomany.TaskManagement.BLL.Models;
+using Tomany.TaskManagement.BLL.Services;
+using Tomany.TaskManagement.DAL.Models;
+using Tomany.TaskManagement.DAL.Repositories;
 
 namespace Tomany.TaskManagement
 {
     public partial class AdminWindow : Window
     {
+        private readonly AccountService _accountService;
+        private readonly ProjectService _projectService;
+
         public int AccountId { get; set; }
         public string Username { get; set; } = string.Empty;
 
         public AdminWindow(int accountId, string username)
         {
             InitializeComponent();
+            
+            var context = new TaskManagementContext();
+            var accountRepository = new AccountRepository(context);
+            _accountService = new AccountService(accountRepository);
+            var projectRepository = new ProjectRepository(context);
+            _projectService = new ProjectService(projectRepository);
+
             AccountId = accountId;
             Username = username;
             WelcomeTextBlock.Text = $"Welcome, {username}";
@@ -20,37 +35,86 @@ namespace Tomany.TaskManagement
         {
             var loginWindow = new LoginWindow();
             loginWindow.Show();
-            this.Close();
+            Close();
         }
 
-        private void UsersButton_Click(object sender, RoutedEventArgs e)
+        private async void UsersButton_Click(object sender, RoutedEventArgs e)
         {
-            ContentTitleTextBlock.Text = "Manage Users";
-            ContentTextBlock.Text = "User management functionality will be implemented here.\n\nYou can:\n- View all users\n- Edit user information\n- Delete users\n- Change user roles";
+            DashboardView.Visibility = Visibility.Collapsed;
+            ProjectManagementView.Visibility = Visibility.Collapsed;
+            UserManagementView.Visibility = Visibility.Visible;
+
+            try
+            {
+                var users = await _accountService.GetAllAsync();
+                UsersDataGrid.ItemsSource = users;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred while loading users: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
-        private void ProjectsButton_Click(object sender, RoutedEventArgs e)
+        private async void ProjectsButton_Click(object sender, RoutedEventArgs e)
         {
-            ContentTitleTextBlock.Text = "Manage Projects";
-            ContentTextBlock.Text = "Project management functionality will be implemented here.\n\nYou can:\n- View all projects\n- Create new projects\n- Edit projects\n- Delete projects";
+            DashboardView.Visibility = Visibility.Collapsed;
+            UserManagementView.Visibility = Visibility.Collapsed;
+            ProjectManagementView.Visibility = Visibility.Visible;
+
+            try
+            {
+                var projects = await _projectService.GetAllAsync();
+                ProjectsDataGrid.ItemsSource = projects;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred while loading projects: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
         }
 
         private void TasksButton_Click(object sender, RoutedEventArgs e)
         {
-            ContentTitleTextBlock.Text = "Manage Tasks";
-            ContentTextBlock.Text = "Task management functionality will be implemented here.\n\nYou can:\n- View all tasks\n- Create new tasks\n- Assign tasks to users\n- Update task status";
+            UserManagementView.Visibility = Visibility.Collapsed;
+            ProjectManagementView.Visibility = Visibility.Collapsed;
+            DashboardView.Visibility = Visibility.Visible;
         }
 
         private void ReportsButton_Click(object sender, RoutedEventArgs e)
         {
-            ContentTitleTextBlock.Text = "Reports";
-            ContentTextBlock.Text = "Reports functionality will be implemented here.\n\nYou can:\n- View system statistics\n- Generate activity reports\n- Export data";
+            UserManagementView.Visibility = Visibility.Collapsed;
+            ProjectManagementView.Visibility = Visibility.Collapsed;
+            DashboardView.Visibility = Visibility.Visible;
         }
 
         private void SettingsButton_Click(object sender, RoutedEventArgs e)
         {
-            ContentTitleTextBlock.Text = "Settings";
-            ContentTextBlock.Text = "System settings functionality will be implemented here.\n\nYou can:\n- Configure system settings\n- Manage email settings\n- Update preferences";
+            UserManagementView.Visibility = Visibility.Collapsed;
+            ProjectManagementView.Visibility = Visibility.Collapsed;
+            DashboardView.Visibility = Visibility.Visible;
+        }
+
+        private void UserBlockUnblock_Click(object sender, RoutedEventArgs e)
+        {
+            if (UsersDataGrid.SelectedItem is ProfileDto selectedUser)
+            {
+                MessageBox.Show($"Placeholder.", "Placeholder", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            else
+            {
+                MessageBox.Show("Please select a user to block/unblock.", "No User Selected", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
+        private void UserResetPassword_Click(object sender, RoutedEventArgs e)
+        {
+            if (UsersDataGrid.SelectedItem is ProfileDto selectedUser)
+            {
+                MessageBox.Show($"Placeholder.", "Placeholder", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+            else
+            {
+                MessageBox.Show("Please select a user to reset password.", "No User Selected", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
         }
     }
 }

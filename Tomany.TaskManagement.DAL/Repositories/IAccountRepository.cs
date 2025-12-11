@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Account = Tomany.TaskManagement.DAL.Models.Account;
 using Profile = Tomany.TaskManagement.DAL.Models.Profile;
@@ -13,5 +14,6 @@ public interface IAccountRepository
     Task UpdateProfileAsync(Profile profile);
     Task<bool> CheckPasswordAsync(int accountId, string currentPassword);
     Task<bool> UpdatePasswordAsync(int accountId, string newPassword);
+    Task<IEnumerable<Account>> GetAllWithProfilesAsync();
 }
 
