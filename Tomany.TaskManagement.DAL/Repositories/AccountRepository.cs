@@ -78,5 +78,14 @@ public class AccountRepository : IAccountRepository
             .Include(a => a.Profile)
             .ToListAsync();
     }
+    public async Task ToggleAccountStatusAsync(int accountId)
+    {
+        var account = await _context.Accounts.FindAsync(accountId);
+        if (account != null)
+        {
+            account.IsActive = !account.IsActive;
+            await _context.SaveChangesAsync();
+        }
+    }
 }
 

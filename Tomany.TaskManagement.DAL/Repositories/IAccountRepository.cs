@@ -15,5 +15,6 @@ public interface IAccountRepository
     Task<bool> CheckPasswordAsync(int accountId, string currentPassword);
     Task<bool> UpdatePasswordAsync(int accountId, string newPassword);
     Task<IEnumerable<Account>> GetAllWithProfilesAsync();
+    Task ToggleAccountStatusAsync(int accountId);
 }
 

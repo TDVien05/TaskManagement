@@ -1,3 +1,5 @@
+using System;
+
 namespace Tomany.TaskManagement.BLL.Models;
 
 public class ProfileDto
@@ -10,5 +12,6 @@ public class ProfileDto
     public string? PhoneNumber { get; set; }
     public DateOnly? DateOfBirth { get; set; }
     public string? Role { get; set; }
+    public bool IsActive { get; set; }
 }
 

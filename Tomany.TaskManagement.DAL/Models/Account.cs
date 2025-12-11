@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace Tomany.TaskManagement.DAL.Models;
@@ -12,6 +12,8 @@ public partial class Account
     public string Password { get; set; } = null!;
 
     public string? Role { get; set; }
+    
+    public bool IsActive { get; set; }
 
     public DateTime? CreateAt { get; set; }
 

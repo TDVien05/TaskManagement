@@ -160,6 +160,7 @@
                                 <DataGridTextColumn Header="DateOfBirth" Binding="{Binding DateOfBirth}" Width="*"/>
                                 <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="2*"/>
                                 <DataGridTextColumn Header="Role" Binding="{Binding Role}" Width="100"/>
+                                <DataGridCheckBoxColumn Header="Active" Binding="{Binding IsActive}" IsReadOnly="True" Width="60"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </StackPanel>

@@ -9,8 +9,8 @@ namespace Tomany.TaskManagement
 {
     public partial class AdminWindow : Window
     {
-        private readonly AccountService _accountService;
-        private readonly ProjectService _projectService;
+        private readonly IAccountService _accountService;
+        private readonly IProjectService _projectService;
 
         public int AccountId { get; set; }
         public string Username { get; set; } = string.Empty;
@@ -44,15 +44,7 @@ namespace Tomany.TaskManagement
             ProjectManagementView.Visibility = Visibility.Collapsed;
             UserManagementView.Visibility = Visibility.Visible;
 
-            try
-            {
-                var users = await _accountService.GetAllAsync();
-                UsersDataGrid.ItemsSource = users;
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"An error occurred while loading users: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            await RefreshUsersGrid();
         }
 
         private async void ProjectsButton_Click(object sender, RoutedEventArgs e)
@@ -93,15 +85,29 @@ namespace Tomany.TaskManagement
             DashboardView.Visibility = Visibility.Visible;
         }
 
-        private void UserBlockUnblock_Click(object sender, RoutedEventArgs e)
+        private async void UserBlockUnblock_Click(object sender, RoutedEventArgs e)
         {
-            if (UsersDataGrid.SelectedItem is ProfileDto selectedUser)
-            {
-                MessageBox.Show($"Placeholder.", "Placeholder", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            else
+            if (UsersDataGrid.SelectedItem is not ProfileDto selectedUser)
             {
                 MessageBox.Show("Please select a user to block/unblock.", "No User Selected", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            string action = selectedUser.IsActive ? "block" : "unblock";
+            var result = MessageBox.Show($"Are you sure you want to {action} the user '{selectedUser.Username}'?", "Confirm Action", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    await _accountService.ToggleAccountStatusAsync(selectedUser.AccountId);
+                    MessageBox.Show($"User '{selectedUser.Username}' has been successfully {action}ed.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    await RefreshUsersGrid();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
 
@@ -109,13 +115,25 @@ namespace Tomany.TaskManagement
         {
             if (UsersDataGrid.SelectedItem is ProfileDto selectedUser)
             {
-                MessageBox.Show($"Placeholder.", "Placeholder", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show($"Reset password functionality for user '{selectedUser.Username}' is not yet implemented.", "Action Not Implemented", MessageBoxButton.OK, MessageBoxImage.Information);
             }
             else
             {
-                MessageBox.Show("Please select a user to reset password.", "No User Selected", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Please select a user to reset their password.", "No User Selected", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+        
+        private async System.Threading.Tasks.Task RefreshUsersGrid()
+        {
+            try
+            {
+                var users = await _accountService.GetAllAsync();
+                UsersDataGrid.ItemsSource = users;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred while loading users: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }
 }
-
