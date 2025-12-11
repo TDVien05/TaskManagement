@@ -30,7 +30,7 @@ public partial class TaskManagementContext : DbContext
 
     public virtual DbSet<UserActivityLog> UserActivityLogs { get; set; }
 
-    private string GetConnectionString()
+    private string? GetConnectionString()
     {
         IConfiguration config = new ConfigurationBuilder()
              .SetBasePath(Directory.GetCurrentDirectory())
