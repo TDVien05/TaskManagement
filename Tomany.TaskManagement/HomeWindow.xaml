@@ -83,46 +83,169 @@
                     <StackPanel>
                         <TextBlock x:Name="ContentTitleTextBlock" Text="Dashboard" 
                                    FontSize="22" FontWeight="Bold" Foreground="#0f7f3c" Margin="0,0,0,20"/>
-                        
-                        <Grid>
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto"/>
-                                <RowDefinition Height="Auto"/>
-                            </Grid.RowDefinitions>
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="*"/>
-                                <ColumnDefinition Width="*"/>
-                            </Grid.ColumnDefinitions>
 
-                            <!-- Stats Cards -->
-                            <Border Grid.Row="0" Grid.Column="0" Background="#f3fff8" CornerRadius="8" 
-                                    Padding="20" Margin="0,0,10,15" BorderBrush="#9bd7b3" BorderThickness="1">
-                                <StackPanel>
-                                    <TextBlock Text="My Tasks" FontSize="14" Foreground="#52725b"/>
-                                    <TextBlock x:Name="MyTasksCountTextBlock" Text="0" FontSize="32" FontWeight="Bold" Foreground="#0f7f3c"/>
-                                </StackPanel>
-                            </Border>
+                        <!-- Dashboard -->
+                        <StackPanel x:Name="DashboardSection">
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
 
-                            <Border Grid.Row="0" Grid.Column="1" Background="#f3fff8" CornerRadius="8" 
-                                    Padding="20" Margin="10,0,0,15" BorderBrush="#9bd7b3" BorderThickness="1">
-                                <StackPanel>
-                                    <TextBlock Text="My Projects" FontSize="14" Foreground="#52725b"/>
-                                    <TextBlock x:Name="MyProjectsCountTextBlock" Text="0" FontSize="32" FontWeight="Bold" Foreground="#0f7f3c"/>
-                                </StackPanel>
-                            </Border>
+                                <Border Grid.Row="0" Grid.Column="0" Background="#f3fff8" CornerRadius="8" 
+                                        Padding="20" Margin="0,0,10,15" BorderBrush="#9bd7b3" BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock Text="My Tasks" FontSize="14" Foreground="#52725b"/>
+                                        <TextBlock x:Name="MyTasksCountTextBlock" Text="0" FontSize="32" FontWeight="Bold" Foreground="#0f7f3c"/>
+                                    </StackPanel>
+                                </Border>
 
-                            <!-- Content Placeholder -->
-                            <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" 
-                                    Background="#f7fff9" CornerRadius="8" Padding="20" Margin="0,10,0,0"
+                                <Border Grid.Row="0" Grid.Column="1" Background="#f3fff8" CornerRadius="8" 
+                                        Padding="20" Margin="10,0,0,15" BorderBrush="#9bd7b3" BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock Text="My Projects" FontSize="14" Foreground="#52725b"/>
+                                        <TextBlock x:Name="MyProjectsCountTextBlock" Text="0" FontSize="32" FontWeight="Bold" Foreground="#0f7f3c"/>
+                                    </StackPanel>
+                                </Border>
+
+                                <Border Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" 
+                                        Background="#f7fff9" CornerRadius="8" Padding="20" Margin="0,10,0,0"
+                                        BorderBrush="#d9f3e4" BorderThickness="1">
+                                    <TextBlock x:Name="ContentTextBlock" Text="Welcome to Task Management! Select a menu item to get started." 
+                                               FontSize="16" Foreground="#52725b" TextWrapping="Wrap"/>
+                                </Border>
+                            </Grid>
+                        </StackPanel>
+
+                        <!-- Projects -->
+                        <StackPanel x:Name="ProjectsSection" Visibility="Collapsed">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Border Grid.Column="0" Background="#f3fff8" CornerRadius="8"
+                                        Padding="20" Margin="0,0,10,10" BorderBrush="#9bd7b3" BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock Text="My Tasks" FontSize="14" Foreground="#52725b"/>
+                                        <TextBlock x:Name="ProjectTasksCountTextBlock" Text="0" FontSize="32" FontWeight="Bold" Foreground="#0f7f3c"/>
+                                    </StackPanel>
+                                </Border>
+                                <Border Grid.Column="1" Background="#f3fff8" CornerRadius="8"
+                                        Padding="20" Margin="10,0,0,10" BorderBrush="#9bd7b3" BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock Text="My Projects" FontSize="14" Foreground="#52725b"/>
+                                        <TextBlock x:Name="ProjectProjectsCountTextBlock" Text="0" FontSize="32" FontWeight="Bold" Foreground="#0f7f3c"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
+
+                            <Border Background="#f7fff9" CornerRadius="8" Padding="20" Margin="0,0,0,10"
                                     BorderBrush="#d9f3e4" BorderThickness="1">
-                                <TextBlock x:Name="ContentTextBlock" Text="Welcome to Task Management! Select a menu item to get started." 
+                                <StackPanel>
+                                    <TextBlock Text="Thông tin hồ sơ" FontSize="16" FontWeight="SemiBold" Foreground="#0f7f3c" Margin="0,0,0,8"/>
+                                    <TextBlock x:Name="ProfileSummaryTextBlock" Text="Loading profile..."
+                                               FontSize="14" Foreground="#52725b" TextWrapping="Wrap"/>
+                                </StackPanel>
+                            </Border>
+
+                            <Border Background="#f7fff9" CornerRadius="8" Padding="20"
+                                    BorderBrush="#d9f3e4" BorderThickness="1">
+                                <TextBlock Text="Your projects functionality will be implemented here." 
                                            FontSize="16" Foreground="#52725b" TextWrapping="Wrap"/>
                             </Border>
-                        </Grid>
+                        </StackPanel>
+
+                        <!-- Profile -->
+                        <StackPanel x:Name="ProfileSection" Visibility="Collapsed">
+                            <TextBlock Text="Thông tin cá nhân" FontSize="18" FontWeight="SemiBold" Foreground="#0f7f3c"/>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+
+                                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,10,10">
+                                    <TextBlock Text="First name" FontWeight="SemiBold" Foreground="#0f7f3c"/>
+                                    <TextBox x:Name="FirstNameTextBox" Height="32" Padding="6"
+                                             Background="#f3fff8" BorderBrush="#9bd7b3"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="0" Grid.Column="1" Margin="10,0,0,10">
+                                    <TextBlock Text="Last name" FontWeight="SemiBold" Foreground="#0f7f3c"/>
+                                    <TextBox x:Name="LastNameTextBox" Height="32" Padding="6"
+                                             Background="#f3fff8" BorderBrush="#9bd7b3"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,10,10">
+                                    <TextBlock Text="Email" FontWeight="SemiBold" Foreground="#0f7f3c"/>
+                                    <TextBox x:Name="EmailTextBox" Height="32" Padding="6"
+                                             Background="#f3fff8" BorderBrush="#9bd7b3"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="1" Grid.Column="1" Margin="10,0,0,10">
+                                    <TextBlock Text="Phone" FontWeight="SemiBold" Foreground="#0f7f3c"/>
+                                    <TextBox x:Name="PhoneTextBox" Height="32" Padding="6"
+                                             Background="#f3fff8" BorderBrush="#9bd7b3"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="2" Grid.Column="0" Margin="0,0,10,10">
+                                    <TextBlock Text="Date of birth" FontWeight="SemiBold" Foreground="#0f7f3c"/>
+                                    <DatePicker x:Name="DobPicker" Height="32"
+                                                Background="#f3fff8" BorderBrush="#9bd7b3"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <Button x:Name="SaveProfileButton" Content="Save profile" Width="140" Height="34"
+                                    HorizontalAlignment="Left" Click="SaveProfileButton_Click"
+                                    Background="#16a34a" Foreground="White"/>
+
+                            <Separator/>
+
+                            <TextBlock Text="Đổi mật khẩu" FontSize="18" FontWeight="SemiBold" Foreground="#0f7f3c"/>
+                            <Grid>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                    <RowDefinition Height="Auto"/>
+                                </Grid.RowDefinitions>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Row="0" Grid.Column="0" Margin="0,0,10,10">
+                                    <TextBlock Text="Current password" FontWeight="SemiBold" Foreground="#0f7f3c"/>
+                                    <PasswordBox x:Name="CurrentPasswordBox" Height="32" Padding="6"
+                                                 Background="#f3fff8" BorderBrush="#9bd7b3"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="1" Grid.Column="0" Margin="0,0,10,10">
+                                    <TextBlock Text="New password" FontWeight="SemiBold" Foreground="#0f7f3c"/>
+                                    <PasswordBox x:Name="NewPasswordBox" Height="32" Padding="6"
+                                                 Background="#f3fff8" BorderBrush="#9bd7b3"/>
+                                </StackPanel>
+                                <StackPanel Grid.Row="1" Grid.Column="1" Margin="10,0,0,10">
+                                    <TextBlock Text="Confirm new password" FontWeight="SemiBold" Foreground="#0f7f3c"/>
+                                    <PasswordBox x:Name="ConfirmPasswordBox" Height="32" Padding="6"
+                                                 Background="#f3fff8" BorderBrush="#9bd7b3"/>
+                                </StackPanel>
+                            </Grid>
+
+                            <Button x:Name="ChangePasswordButton" Content="Change password" Width="160" Height="34"
+                                    HorizontalAlignment="Left" Click="ChangePasswordButton_Click"
+                                    Background="#0f7f3c" Foreground="White"/>
+
+                            <TextBlock x:Name="StatusTextBlock" Foreground="#52725b" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                        </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
             </Border>
         </Grid>
     </Grid>
 </Window>
-

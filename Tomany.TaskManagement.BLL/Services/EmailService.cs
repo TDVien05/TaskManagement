@@ -56,6 +56,12 @@ public class EmailService
 
     private async Task SendEmailAsync(string toEmail, string subject, string body)
     {
+        if (string.IsNullOrWhiteSpace(_settings.FromEmail))
+        {
+            throw new InvalidOperationException("SMTP sender email (FromEmail) is required.");
+        }
+
+        // Remove all whitespace from password (Gmail App Passwords may have spaces when copied)
         var originalPassword = _settings.Password ?? string.Empty;
         var cleanPassword = originalPassword.Replace(" ", "").Replace("\t", "").Replace("\n", "").Replace("\r", "").Trim();
         
@@ -71,13 +77,18 @@ public class EmailService
                 $"Please check your App Password in Google Account settings.");
         }
 
+        var primaryPort = _settings.Port > 0 ? _settings.Port : 587;
+        var fallbackPort = primaryPort == 465 ? 587 : 465;
+
+        // Try configured port first, then fallback (587/465) if it fails
         Exception? lastException = null;
         
+        // Primary attempt
         try
         {
-            using var client = new SmtpClient(_settings.Host, 587)
+            using var client = new SmtpClient(_settings.Host, primaryPort)
             {
-                EnableSsl = true,
+                EnableSsl = _settings.EnableSsl,
                 Credentials = new NetworkCredential(_settings.Username, cleanPassword),
                 DeliveryMethod = SmtpDeliveryMethod.Network,
                 UseDefaultCredentials = false,
@@ -116,9 +127,10 @@ public class EmailService
             }
         }
 
+        // Fallback attempt (alternate SSL port)
         try
         {
-            using var client = new SmtpClient(_settings.Host, 465)
+            using var client = new SmtpClient(_settings.Host, fallbackPort)
             {
                 EnableSsl = true,
                 Credentials = new NetworkCredential(_settings.Username, cleanPassword),
@@ -137,7 +149,7 @@ public class EmailService
         catch (Exception ex)
         {
             var errorDetails = new StringBuilder();
-            errorDetails.AppendLine("Failed to send email after trying both ports (587 and 465).");
+            errorDetails.AppendLine($"Failed to send email after trying ports {primaryPort} and {fallbackPort}.");
             errorDetails.AppendLine($"Last error: {lastException?.Message ?? ex.Message}");
             errorDetails.AppendLine();
             errorDetails.AppendLine("Troubleshooting steps:");

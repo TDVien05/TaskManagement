@@ -1,5 +1,8 @@
+using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Tomany.TaskManagement.DAL.Models;
+using Account = Tomany.TaskManagement.DAL.Models.Account;
+using Profile = Tomany.TaskManagement.DAL.Models.Profile;
+using TaskManagementContext = Tomany.TaskManagement.DAL.Models.TaskManagementContext;
 
 namespace Tomany.TaskManagement.DAL.Repositories;
 
@@ -34,6 +37,37 @@ public class AccountRepository : IAccountRepository
         var account = await _context.Accounts
             .FirstOrDefaultAsync(a => a.Username == username && a.Password == password);
         return account;
+    }
+
+    public async Task<Profile?> GetProfileAsync(int accountId)
+    {
+        return await _context.Profiles.AsNoTracking()
+            .FirstOrDefaultAsync(p => p.AccountId == accountId);
+    }
+
+    public async Task UpdateProfileAsync(Profile profile)
+    {
+        _context.Profiles.Update(profile);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task<bool> CheckPasswordAsync(int accountId, string currentPassword)
+    {
+        return await _context.Accounts.AnyAsync(a =>
+            a.AccountId == accountId && a.Password == currentPassword);
+    }
+
+    public async Task<bool> UpdatePasswordAsync(int accountId, string newPassword)
+    {
+        var account = await _context.Accounts.FirstOrDefaultAsync(a => a.AccountId == accountId);
+        if (account == null)
+        {
+            return false;
+        }
+
+        account.Password = newPassword;
+        await _context.SaveChangesAsync();
+        return true;
     }
 }
 
