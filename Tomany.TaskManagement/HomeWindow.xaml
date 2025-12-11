@@ -153,11 +153,82 @@
                                 </StackPanel>
                             </Border>
 
-                            <Border Background="#f7fff9" CornerRadius="8" Padding="20"
-                                    BorderBrush="#d9f3e4" BorderThickness="1">
-                                <TextBlock Text="Your projects functionality will be implemented here." 
-                                           FontSize="16" Foreground="#52725b" TextWrapping="Wrap"/>
-                            </Border>
+                            <!-- Filter Controls (New) -->
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <TextBox x:Name="ProjectSearchTextBox" Width="200" Height="32" Padding="5"
+                                         VerticalContentAlignment="Center"
+                                         Background="#f3fff8" BorderBrush="#9bd7b3" BorderThickness="1"
+                                         Text="Search projects..." FontStyle="Italic" Foreground="#999"
+                                         GotFocus="ProjectSearchTextBox_GotFocus" LostFocus="ProjectSearchTextBox_LostFocus"
+                                         TextChanged="ProjectSearchTextBox_TextChanged"/>
+                                <!-- ComboBox for status can be added here later -->
+                            </StackPanel>
+
+                            <ListView x:Name="ProjectsListView"
+                                      Background="Transparent"
+                                      BorderBrush="Transparent"
+                                      ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                                      MouseDoubleClick="ProjectsListView_MouseDoubleClick">
+                                <ListView.ItemContainerStyle>
+                                    <Style TargetType="ListViewItem">
+                                        <Setter Property="Padding" Value="0"/>
+                                        <Setter Property="Margin" Value="0,0,0,10"/>
+                                        <Setter Property="Background" Value="Transparent"/>
+                                        <Setter Property="BorderBrush" Value="Transparent"/>
+                                        <Setter Property="Template">
+                                            <Setter.Value>
+                                                <ControlTemplate TargetType="ListViewItem">
+                                                    <Border x:Name="Border"
+                                                            Background="{TemplateBinding Background}"
+                                                            BorderBrush="{TemplateBinding BorderBrush}"
+                                                            BorderThickness="{TemplateBinding BorderThickness}"
+                                                            Padding="{TemplateBinding Padding}">
+                                                        <ContentPresenter/>
+                                                    </Border>
+                                                </ControlTemplate>
+                                            </Setter.Value>
+                                        </Setter>
+                                    </Style>
+                                </ListView.ItemContainerStyle>
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Background="#f7fff9" CornerRadius="8" Padding="15" Margin="0,0,0,10"
+                                                BorderBrush="#d9f3e4" BorderThickness="1">
+                                            <Border.Effect>
+                                                <DropShadowEffect Color="#33000000" BlurRadius="4" ShadowDepth="1" Opacity="0.4"/>
+                                            </Border.Effect>
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="Auto"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel Grid.Column="0">
+                                                    <TextBlock Text="{Binding ProjectName}"
+                                                               FontSize="18" FontWeight="Bold" Foreground="#0f7f3c"
+                                                               TextWrapping="Wrap"/>
+                                                    <TextBlock Text="{Binding ProjectDescription}"
+                                                               FontSize="14" Foreground="#52725b" Margin="0,5,0,0"
+                                                               TextWrapping="Wrap" MaxHeight="60" TextTrimming="CharacterEllipsis"/>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
+                                                        <TextBlock Text="Status: " FontWeight="SemiBold" Foreground="#0f7f3c"/>
+                                                        <TextBlock Text="{Binding ProjectStatus}" Foreground="#52725b"/>
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                                                        <TextBlock Text="Created: " FontWeight="SemiBold" Foreground="#0f7f3c"/>
+                                                        <TextBlock Text="{Binding CreateAt, StringFormat='{}{0:dd/MM/yyyy}'}" Foreground="#52725b"/>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                                <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
+                                                    <TextBlock Text="Due Date" FontSize="12" Foreground="#0f7f3c" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding DueDate, StringFormat='{}{0:dd/MM}'}"
+                                                               FontSize="16" FontWeight="Bold" Foreground="#16a34a"
+                                                               HorizontalAlignment="Center"/>
+                                                </StackPanel>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
                         </StackPanel>
 
                         <!-- Profile -->
@@ -242,6 +313,59 @@
                                     Background="#0f7f3c" Foreground="White"/>
 
                             <TextBlock x:Name="StatusTextBlock" Foreground="#52725b" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                        </StackPanel>
+
+                        <!-- Project Detail Section (New) -->
+                        <StackPanel x:Name="ProjectDetailSection" Visibility="Collapsed">
+                            <!-- Back Button -->
+                            <Button x:Name="BackToProjectsButton" Content="&lt; Back to Projects" 
+                                    Background="Transparent" BorderBrush="Transparent" Foreground="#0f7f3c"
+                                    FontWeight="SemiBold" HorizontalAlignment="Left" Margin="0,0,0,15"
+                                    Click="BackToProjectsButton_Click"/>
+
+                            <!-- Project Header -->
+                            <TextBlock x:Name="ProjectDetailNameTextBlock" Text="Project Name"
+                                       FontSize="22" FontWeight="Bold" Foreground="#0f7f3c" Margin="0,0,0,5"/>
+                            <TextBlock x:Name="ProjectDetailDescriptionTextBlock" Text="Project description goes here..."
+                                       FontSize="14" Foreground="#52725b" TextWrapping="Wrap" Margin="0,0,0,15"/>
+
+                            <!-- Tasks List -->
+                            <TextBlock Text="Tasks in this Project" FontSize="18" FontWeight="Bold" Foreground="#0f7f3c" Margin="0,10,0,10"/>
+                            <ListView x:Name="TasksListView" MaxHeight="250" Background="Transparent" BorderBrush="#d9f3e4">
+                                <ListView.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Padding="10" Margin="0,0,0,5" CornerRadius="4" BorderBrush="#d9f3e4" BorderThickness="1" Background="#f7fff9">
+                                            <Grid>
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*"/>
+                                                    <ColumnDefinition Width="100"/>
+                                                </Grid.ColumnDefinitions>
+                                                <StackPanel>
+                                                    <TextBlock Text="{Binding TaskName}" FontWeight="Bold" Foreground="#0f7f3c"/>
+                                                    <TextBlock Text="{Binding TaskDescription}" TextWrapping="Wrap" Foreground="#52725b"/>
+                                                </StackPanel>
+                                                <TextBlock Grid.Column="1" Text="{Binding TaskStatus}" HorizontalAlignment="Right" VerticalAlignment="Center" Foreground="#16a34a"/>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </ListView.ItemTemplate>
+                            </ListView>
+
+                            <!-- Members List -->
+                            <TextBlock Text="Project Members" FontSize="18" FontWeight="Bold" Foreground="#0f7f3c" Margin="0,20,0,10"/>
+                            <ItemsControl x:Name="MembersItemsControl">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Border Padding="8" Margin="0,0,0,5" CornerRadius="4" BorderBrush="#d9f3e4" BorderThickness="1" Background="#f7fff9">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{Binding Account.Username}" FontWeight="Bold" Foreground="#0f7f3c"/>
+                                                <TextBlock Text=" - " Foreground="#52725b"/>
+                                                <TextBlock Text="{Binding RoleInProject}" Foreground="#52725b"/>
+                                            </StackPanel>
+                                        </Border>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>

@@ -1,4 +1,6 @@
 using System;
+using System.Collections.ObjectModel; 
+using System.ComponentModel; 
 using System.Threading.Tasks;
 using System.Windows;
 using Tomany.TaskManagement.BLL.Models;
@@ -13,6 +15,7 @@ namespace Tomany.TaskManagement
         public int AccountId { get; set; }
         public string Username { get; set; } = string.Empty;
         private readonly ProfileService _profileService;
+        private readonly ProjectService _projectService; 
         private ProfileDto? _currentProfile;
         private bool _isSavingProfile;
         private bool _isChangingPassword;
@@ -28,6 +31,9 @@ namespace Tomany.TaskManagement
             var dbContext = new TaskManagementContext();
             var accountRepo = new AccountRepository(dbContext);
             _profileService = new ProfileService(accountRepo);
+
+            var projectRepo = new ProjectRepository(dbContext);
+            _projectService = new ProjectService(projectRepo);
 
             Loaded += HomeWindow_Loaded;
         }
@@ -52,9 +58,10 @@ namespace Tomany.TaskManagement
             ContentTextBlock.Text = "Your tasks functionality will be implemented here.\n\nYou can:\n- View your assigned tasks\n- Update task status\n- Submit task work\n- View task history";
         }
 
-        private void MyProjectsButton_Click(object sender, RoutedEventArgs e)
+        private async void MyProjectsButton_Click(object sender, RoutedEventArgs e) 
         {
             ShowProjects();
+            await LoadProjectsAsync(); 
         }
 
         private void ProfileButton_Click(object sender, RoutedEventArgs e)
@@ -93,6 +100,27 @@ namespace Tomany.TaskManagement
             ProfileSection.Visibility = Visibility.Visible;
             ApplyProfileToForm();
         }
+
+        public ObservableCollection<Project> Projects { get; set; } // New Property
+        private ICollectionView _projectsView; // New Field
+
+        private async Task LoadProjectsAsync()
+        {
+            try
+            {
+                var projectsList = await _projectService.GetProjectsByAccountIdAsync(AccountId);
+                Projects = new ObservableCollection<Project>(projectsList);
+                _projectsView = CollectionViewSource.GetDefaultView(Projects);
+                _projectsView.Filter = ApplyProjectsFilter; // New line
+                ProjectsListView.ItemsSource = _projectsView;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading projects: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                // Optionally log the error
+            }
+        }
+
 
         private async Task LoadProfileAsync()
         {
@@ -211,6 +239,92 @@ namespace Tomany.TaskManagement
 
             ChangePasswordButton.IsEnabled = true;
             _isChangingPassword = false;
+        }
+
+        // --- Filter Logic for Projects ---
+        private void ProjectSearchTextBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (ProjectSearchTextBox.Text == "Search projects..." && ProjectSearchTextBox.FontStyle == FontStyles.Italic)
+            {
+                ProjectSearchTextBox.Text = "";
+                ProjectSearchTextBox.FontStyle = FontStyles.Normal;
+                ProjectSearchTextBox.Foreground = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#52725b");
+            }
+        }
+
+        private void ProjectSearchTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(ProjectSearchTextBox.Text))
+            {
+                ProjectSearchTextBox.Text = "Search projects...";
+                ProjectSearchTextBox.FontStyle = FontStyles.Italic;
+                ProjectSearchTextBox.Foreground = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#999");
+            }
+        }
+
+        private void ProjectSearchTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            if (_projectsView != null)
+            {
+                _projectsView.Refresh();
+            }
+        }
+
+        private bool ApplyProjectsFilter(object item)
+        {
+            if (item is Project project)
+            {
+                string searchText = ProjectSearchTextBox.Text.ToLower();
+
+                if (string.IsNullOrWhiteSpace(searchText) || searchText == "search projects...")
+                {
+                    return true; // No filter applied
+                }
+
+                return project.ProjectName.ToLower().Contains(searchText) ||
+                       (project.ProjectDescription != null && project.ProjectDescription.ToLower().Contains(searchText));
+            }
+            return false;
+        }
+
+        // --- Project Detail View Logic ---
+        private void ShowProjectDetailView()
+        {
+            ProjectsSection.Visibility = Visibility.Collapsed;
+            ProjectDetailSection.Visibility = Visibility.Visible;
+            ContentTitleTextBlock.Text = "Project Details";
+        }
+
+        private void HideProjectDetailView()
+        {
+            ProjectDetailSection.Visibility = Visibility.Collapsed;
+            ShowProjects(); // Re-show the projects list
+        }
+
+        private void BackToProjectsButton_Click(object sender, RoutedEventArgs e)
+        {
+            HideProjectDetailView();
+        }
+
+        private async void ProjectsListView_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (ProjectsListView.SelectedItem is Project selectedProject)
+            {
+                var projectDetails = await _projectService.GetProjectByIdAsync(selectedProject.ProjectId);
+                if (projectDetails != null)
+                {
+                    ProjectDetailNameTextBlock.Text = projectDetails.ProjectName;
+                    ProjectDetailDescriptionTextBlock.Text = projectDetails.ProjectDescription;
+                    TasksListView.ItemsSource = projectDetails.Tasks;
+                    MembersItemsControl.ItemsSource = projectDetails.ProjectMembers;
+
+                    ShowProjectDetailView();
+                }
+                else
+                {
+                    MessageBox.Show("Could not load project details.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
         }
     }
 }
