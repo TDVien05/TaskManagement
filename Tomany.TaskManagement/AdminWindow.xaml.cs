@@ -111,15 +111,27 @@ namespace Tomany.TaskManagement
             }
         }
 
-        private void UserResetPassword_Click(object sender, RoutedEventArgs e)
+        private async void UserResetPassword_Click(object sender, RoutedEventArgs e)
         {
-            if (UsersDataGrid.SelectedItem is ProfileDto selectedUser)
-            {
-                MessageBox.Show($"Reset password functionality for user '{selectedUser.Username}' is not yet implemented.", "Action Not Implemented", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            else
+            if (UsersDataGrid.SelectedItem is not ProfileDto selectedUser)
             {
                 MessageBox.Show("Please select a user to reset their password.", "No User Selected", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var result = MessageBox.Show($"Are you sure you want to reset the password for '{selectedUser.Username}'?", "Confirm Action", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    string newPassword = await _accountService.ResetPasswordAsync(selectedUser.AccountId);
+                    MessageBox.Show($"Password for '{selectedUser.Username}' has been reset to:\n\n{newPassword}\n\nPlease provide this to the user.", "Password Reset Successfully", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"An error occurred while resetting the password: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
             }
         }
         

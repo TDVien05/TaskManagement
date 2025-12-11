@@ -1,5 +1,7 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using Tomany.TaskManagement.BLL.Models;
 using Tomany.TaskManagement.DAL.Models;
@@ -37,6 +39,18 @@ public class AccountService : IAccountService
     public async Task ToggleAccountStatusAsync(int accountId)
     {
         await _accountRepository.ToggleAccountStatusAsync(accountId);
+    }
+    
+    public async System.Threading.Tasks.Task<string> ResetPasswordAsync(int accountId)
+    {
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        var random = new Random();
+        var newPassword = new string(Enumerable.Repeat(chars, 8)
+            .Select(s => s[random.Next(s.Length)]).ToArray());
+
+        await _accountRepository.UpdatePasswordAsync(accountId, newPassword);
+
+        return newPassword;
     }
 
     public RegisterResult ValidateRequest(RegisterRequest request)

@@ -9,5 +9,6 @@ namespace Tomany.TaskManagement.BLL.Services
         Task<IEnumerable<ProfileDto>> GetAllAsync();
         Task<RegisterResult> RegisterAsync(RegisterRequest request);
         System.Threading.Tasks.Task ToggleAccountStatusAsync(int accountId);
+        Task<string> ResetPasswordAsync(int accountId);
     }
 }
