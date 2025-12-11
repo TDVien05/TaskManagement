@@ -11,24 +11,34 @@ public class OtpService
     }
 
     private static readonly ConcurrentDictionary<string, OtpEntry> Store = new();
-    private readonly TimeSpan _ttl = TimeSpan.FromMinutes(5);
+    private readonly TimeSpan _ttl;
     private readonly Random _random = new();
     private readonly EmailService? _emailService;
 
-    public OtpService(EmailService? emailService = null)
+    public OtpService(EmailService? emailService = null, int? ttlMinutes = null)
     {
         _emailService = emailService;
+        var minutes = ttlMinutes.HasValue && ttlMinutes.Value > 0 ? ttlMinutes.Value : 5;
+        _ttl = TimeSpan.FromMinutes(minutes);
     }
+
+    public bool EmailSendingEnabled => _emailService != null;
 
     public string GenerateOtp(string email)
     {
+        if (string.IsNullOrWhiteSpace(email))
+        {
+            throw new ArgumentException("Email is required to generate OTP.", nameof(email));
+        }
+
+        var emailKey = email.Trim().ToLowerInvariant();
         var code = _random.Next(0, 999999).ToString("D6");
         var entry = new OtpEntry
         {
             Code = code,
             ExpireAt = DateTime.UtcNow.Add(_ttl)
         };
-        Store[email] = entry;
+        Store[emailKey] = entry;
         return code;
     }
 
@@ -53,21 +63,28 @@ public class OtpService
 
     public bool ValidateOtp(string email, string code)
     {
-        if (!Store.TryGetValue(email, out var entry))
+        if (string.IsNullOrWhiteSpace(email) || string.IsNullOrWhiteSpace(code))
+        {
+            return false;
+        }
+
+        var emailKey = email.Trim().ToLowerInvariant();
+
+        if (!Store.TryGetValue(emailKey, out var entry))
         {
             return false;
         }
 
         if (DateTime.UtcNow > entry.ExpireAt)
         {
-            Store.TryRemove(email, out _);
+            Store.TryRemove(emailKey, out _);
             return false;
         }
 
         var isMatch = string.Equals(entry.Code, code?.Trim(), StringComparison.Ordinal);
         if (isMatch)
         {
-            Store.TryRemove(email, out _);
+            Store.TryRemove(emailKey, out _);
         }
 
         return isMatch;

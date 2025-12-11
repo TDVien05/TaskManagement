@@ -1,4 +1,5 @@
 using System.Windows;
+using Microsoft.Extensions.Configuration;
 using Tomany.TaskManagement.BLL.Models;
 using Tomany.TaskManagement.BLL.Services;
 
@@ -6,6 +7,7 @@ namespace Tomany.TaskManagement
 {
     public partial class RegisterWindow : Window
     {
+        private readonly IConfiguration _configuration;
         private readonly AccountService _accountService;
         private readonly OtpService _otpService;
         private bool _isSubmitting;
@@ -14,6 +16,7 @@ namespace Tomany.TaskManagement
         public RegisterWindow()
         {
             InitializeComponent();
+            _configuration = BuildConfiguration();
             var dbContext = new Tomany.TaskManagement.DAL.Models.TaskManagementContext();
             var accountRepo = new Tomany.TaskManagement.DAL.Repositories.AccountRepository(dbContext);
             _accountService = new AccountService(accountRepo);
@@ -21,29 +24,67 @@ namespace Tomany.TaskManagement
             // Configure email service (update these with your SMTP credentials)
             var smtpSettings = GetSmtpSettings();
             var emailService = smtpSettings != null ? new EmailService(smtpSettings) : null;
-            _otpService = new OtpService(emailService);
+            var otpTtlMinutes = GetOtpTtlMinutes();
+            _otpService = new OtpService(emailService, otpTtlMinutes);
+        }
+
+        private IConfiguration BuildConfiguration()
+        {
+            return new ConfigurationBuilder()
+                .SetBasePath(AppContext.BaseDirectory)
+                .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+                .Build();
+        }
+
+        private int? GetOtpTtlMinutes()
+        {
+            var ttlValue = _configuration["Otp:TtlMinutes"];
+            if (int.TryParse(ttlValue, out var minutes) && minutes > 0)
+            {
+                return minutes;
+            }
+
+            return null;
         }
 
         private SmtpSettings? GetSmtpSettings()
         {
-            // TODO: Configure your SMTP settings here
-            // For Gmail, you need to:
-            // 1. Enable "Less secure app access" or use App Password
-            // 2. Replace with your Gmail credentials
-            
-            // Example for Gmail:
-            // return new SmtpSettings(
-            //     username: "your-email@gmail.com",
-            //     password: "your-app-password",
-            //     fromEmail: "your-email@gmail.com"
-            // );
-            
-            // Return null to disable email sending (will show OTP in MessageBox)
-            return new SmtpSettings(
-                username: "vientruongdoan@gmail.com",
-                password: "grku ryyd ldsr gjov",
-                fromEmail: "vientruongdoan@gmail.com"
-            );
+            var username = _configuration["Smtp:Username"];
+            var password = _configuration["Smtp:Password"];
+            var fromEmail = _configuration["Smtp:FromEmail"];
+
+            if (string.IsNullOrWhiteSpace(username) ||
+                string.IsNullOrWhiteSpace(password) ||
+                string.IsNullOrWhiteSpace(fromEmail))
+            {
+                return null;
+            }
+
+            var host = _configuration["Smtp:Host"] ?? "smtp.gmail.com";
+            var portValue = _configuration["Smtp:Port"];
+            var sslValue = _configuration["Smtp:EnableSsl"];
+            var port = 587;
+            var enableSsl = true;
+
+            if (int.TryParse(portValue, out var parsedPort))
+            {
+                port = parsedPort;
+            }
+
+            if (bool.TryParse(sslValue, out var parsedSsl))
+            {
+                enableSsl = parsedSsl;
+            }
+
+            return new SmtpSettings
+            {
+                Host = host,
+                Port = port,
+                EnableSsl = enableSsl,
+                Username = username.Trim(),
+                Password = password.Trim(),
+                FromEmail = fromEmail.Trim()
+            };
         }
 
         private async void SendOtpButton_Click(object sender, RoutedEventArgs e)
@@ -62,8 +103,16 @@ namespace Tomany.TaskManagement
             {
                 var code = await _otpService.GenerateAndSendOtpAsync(email);
                 _emailVerified = false;
-                UpdateStatus("OTP sent. Please check your email.");
-                MessageBox.Show("OTP has been sent to your email address.", "OTP Sent", MessageBoxButton.OK, MessageBoxImage.Information);
+                if (_otpService.EmailSendingEnabled)
+                {
+                    UpdateStatus("OTP sent. Please check your email.");
+                    MessageBox.Show("OTP has been sent to your email address.", "OTP Sent", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+                else
+                {
+                    UpdateStatus("OTP generated. Email sending is not configured; showing code here.");
+                    MessageBox.Show($"SMTP is not configured. Use this OTP to verify: {code}", "OTP Code", MessageBoxButton.OK, MessageBoxImage.Information);
+                }
             }
             catch (Exception ex)
             {
