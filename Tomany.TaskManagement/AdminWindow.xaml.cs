@@ -42,6 +42,7 @@ namespace Tomany.TaskManagement
         {
             DashboardView.Visibility = Visibility.Collapsed;
             ProjectManagementView.Visibility = Visibility.Collapsed;
+            ManagerRequestsView.Visibility = Visibility.Collapsed;
             UserManagementView.Visibility = Visibility.Visible;
 
             await RefreshUsersGrid();
@@ -51,6 +52,7 @@ namespace Tomany.TaskManagement
         {
             DashboardView.Visibility = Visibility.Collapsed;
             UserManagementView.Visibility = Visibility.Collapsed;
+            ManagerRequestsView.Visibility = Visibility.Collapsed;
             ProjectManagementView.Visibility = Visibility.Visible;
 
             try
@@ -63,11 +65,22 @@ namespace Tomany.TaskManagement
                 MessageBox.Show($"An error occurred while loading projects: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+        
+        private async void ManagerRequestsButton_Click(object sender, RoutedEventArgs e)
+        {
+            DashboardView.Visibility = Visibility.Collapsed;
+            UserManagementView.Visibility = Visibility.Collapsed;
+            ProjectManagementView.Visibility = Visibility.Collapsed;
+            ManagerRequestsView.Visibility = Visibility.Visible;
+
+            await RefreshManagerRequestsGrid();
+        }
 
         private void TasksButton_Click(object sender, RoutedEventArgs e)
         {
             UserManagementView.Visibility = Visibility.Collapsed;
             ProjectManagementView.Visibility = Visibility.Collapsed;
+            ManagerRequestsView.Visibility = Visibility.Collapsed;
             DashboardView.Visibility = Visibility.Visible;
         }
 
@@ -75,6 +88,7 @@ namespace Tomany.TaskManagement
         {
             UserManagementView.Visibility = Visibility.Collapsed;
             ProjectManagementView.Visibility = Visibility.Collapsed;
+            ManagerRequestsView.Visibility = Visibility.Collapsed;
             DashboardView.Visibility = Visibility.Visible;
         }
 
@@ -82,6 +96,7 @@ namespace Tomany.TaskManagement
         {
             UserManagementView.Visibility = Visibility.Collapsed;
             ProjectManagementView.Visibility = Visibility.Collapsed;
+            ManagerRequestsView.Visibility = Visibility.Collapsed;
             DashboardView.Visibility = Visibility.Visible;
         }
 
@@ -135,6 +150,56 @@ namespace Tomany.TaskManagement
             }
         }
         
+        private async void ApproveRequest_Click(object sender, RoutedEventArgs e)
+        {
+            if (ManagerRequestsDataGrid.SelectedItem is not ProfileDto selectedUser)
+            {
+                MessageBox.Show("Please select a request to approve.", "No Request Selected", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var result = MessageBox.Show($"Are you sure you want to approve '{selectedUser.Username}' as a Manager?", "Confirm Approval", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    await _accountService.ApproveRequestAsync(selectedUser.AccountId);
+                    MessageBox.Show($"User '{selectedUser.Username}' has been promoted to Manager.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    await RefreshManagerRequestsGrid();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private async void RejectRequest_Click(object sender, RoutedEventArgs e)
+        {
+            if (ManagerRequestsDataGrid.SelectedItem is not ProfileDto selectedUser)
+            {
+                MessageBox.Show("Please select a request to reject.", "No Request Selected", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
+            }
+
+            var result = MessageBox.Show($"Are you sure you want to reject the manager request for '{selectedUser.Username}'?", "Confirm Rejection", MessageBoxButton.YesNo, MessageBoxImage.Question);
+
+            if (result == MessageBoxResult.Yes)
+            {
+                try
+                {
+                    await _accountService.RejectRequestAsync(selectedUser.AccountId);
+                    MessageBox.Show($"The manager request for '{selectedUser.Username}' has been rejected. The user remains a 'User'.", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+                    await RefreshManagerRequestsGrid();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
         private async System.Threading.Tasks.Task RefreshUsersGrid()
         {
             try
@@ -145,6 +210,19 @@ namespace Tomany.TaskManagement
             catch (Exception ex)
             {
                 MessageBox.Show($"An error occurred while loading users: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+        
+        private async System.Threading.Tasks.Task RefreshManagerRequestsGrid()
+        {
+            try
+            {
+                var applicants = await _accountService.GetUsersByRoleAsync("Applicant");
+                ManagerRequestsDataGrid.ItemsSource = applicants;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred while loading manager requests: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }

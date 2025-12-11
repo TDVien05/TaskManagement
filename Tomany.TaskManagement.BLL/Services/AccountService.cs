@@ -36,6 +36,12 @@ public class AccountService : IAccountService
         }).ToList();
     }
     
+    public async System.Threading.Tasks.Task<IEnumerable<ProfileDto>> GetUsersByRoleAsync(string role)
+    {
+        var allUsers = await GetAllAsync();
+        return allUsers.Where(u => string.Equals(u.Role, role, StringComparison.OrdinalIgnoreCase));
+    }
+    
     public async Task ToggleAccountStatusAsync(int accountId)
     {
         await _accountRepository.ToggleAccountStatusAsync(accountId);
@@ -51,6 +57,16 @@ public class AccountService : IAccountService
         await _accountRepository.UpdatePasswordAsync(accountId, newPassword);
 
         return newPassword;
+    }
+    
+    public async Task ApproveRequestAsync(int accountId)
+    {
+        await _accountRepository.UpdateAccountRoleAsync(accountId, "Manager");
+    }
+
+    public async Task RejectRequestAsync(int accountId)
+    {
+        await _accountRepository.UpdateAccountRoleAsync(accountId, "User");
     }
 
     public RegisterResult ValidateRequest(RegisterRequest request)

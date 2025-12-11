@@ -16,5 +16,6 @@ public interface IAccountRepository
     Task<bool> UpdatePasswordAsync(int accountId, string newPassword);
     Task<IEnumerable<Account>> GetAllWithProfilesAsync();
     Task ToggleAccountStatusAsync(int accountId);
+    Task UpdateAccountRoleAsync(int accountId, string newRole);
 }
 

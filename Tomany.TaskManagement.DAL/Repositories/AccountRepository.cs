@@ -87,5 +87,15 @@ public class AccountRepository : IAccountRepository
             await _context.SaveChangesAsync();
         }
     }
+    
+    public async Task UpdateAccountRoleAsync(int accountId, string newRole)
+    {
+        var account = await _context.Accounts.FindAsync(accountId);
+        if (account != null)
+        {
+            account.Role = newRole;
+            await _context.SaveChangesAsync();
+        }
+    }
 }
 

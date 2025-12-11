@@ -67,6 +67,9 @@
                     <Button x:Name="TasksButton" Content="Manage Tasks" Height="40" Margin="0,0,0,10"
                             Background="#f3fff8" BorderBrush="#9bd7b3" Foreground="#0f7f3c"
                             Click="TasksButton_Click"/>
+                    <Button x:Name="ManagerRequestsButton" Content="Manager Requests" Height="40" Margin="0,0,0,10"
+                            Background="#f3fff8" BorderBrush="#9bd7b3" Foreground="#0f7f3c"
+                            Click="ManagerRequestsButton_Click"/>
                     <Button x:Name="ReportsButton" Content="Reports" Height="40" Margin="0,0,0,10"
                             Background="#f3fff8" BorderBrush="#9bd7b3" Foreground="#0f7f3c"
                             Click="ReportsButton_Click"/>
@@ -181,6 +184,31 @@
                                 <DataGridTextColumn Header="Created By" Binding="{Binding CreatedByUsername}" Width="120"/>
                                 <DataGridTextColumn Header="Created At" Binding="{Binding CreateAt}" Width="120"/>
                                 <DataGridTextColumn Header="Updated At" Binding="{Binding UpdateAt}" Width="120"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+
+                    <!-- Manager Requests View -->
+                    <StackPanel x:Name="ManagerRequestsView" Visibility="Collapsed">
+                        <TextBlock Text="Manager Requests" FontSize="22" FontWeight="Bold" 
+                                   Foreground="#0f7f3c" Margin="0,0,0,20"/>
+                        <DataGrid x:Name="ManagerRequestsDataGrid" AutoGenerateColumns="False" IsReadOnly="True"
+                                  HeadersVisibility="Column" GridLinesVisibility="Horizontal"
+                                  Background="White" BorderBrush="#d9f3e4" BorderThickness="1"
+                                  CanUserAddRows="False">
+                            <DataGrid.ContextMenu>
+                                <ContextMenu>
+                                    <MenuItem Header="Approve" Click="ApproveRequest_Click"/>
+                                    <MenuItem Header="Reject" Click="RejectRequest_Click"/>
+                                </ContextMenu>
+                            </DataGrid.ContextMenu>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="ID" Binding="{Binding AccountId}" Width="50"/>
+                                <DataGridTextColumn Header="Username" Binding="{Binding Username}" Width="*"/>
+                                <DataGridTextColumn Header="FirstName" Binding="{Binding FirstName}" Width="*"/>
+                                <DataGridTextColumn Header="LastName" Binding="{Binding LastName}" Width="*"/>
+                                <DataGridTextColumn Header="Email" Binding="{Binding Email}" Width="2*"/>
+                                <DataGridTextColumn Header="Role" Binding="{Binding Role}" Width="100"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </StackPanel>
