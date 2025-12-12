@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Data; 
+using Microsoft.EntityFrameworkCore;
 using Tomany.TaskManagement.BLL.Models;
 using Tomany.TaskManagement.BLL.Services;
 using Tomany.TaskManagement.DAL.Models;
@@ -30,12 +31,9 @@ namespace Tomany.TaskManagement
             WelcomeTextBlock.Text = $"Welcome back, {username}!";
             UserInfoTextBlock.Text = username;
 
-            var dbContext = new TaskManagementContext();
-            var accountRepo = new AccountRepository(dbContext);
-            _profileService = new ProfileService(accountRepo);
-
-            var projectRepo = new ProjectRepository(dbContext);
-            _projectService = new ProjectService(projectRepo);
+            // Use the ServiceFactory to get service instances
+            _profileService = ServiceFactory.CreateProfileService();
+            _projectService = ServiceFactory.CreateProjectService();
 
             // Initialize collections and view to satisfy non-nullable requirements
             Projects = new ObservableCollection<Project>();
@@ -66,13 +64,11 @@ namespace Tomany.TaskManagement
             ContentTextBlock.Text = "Your tasks functionality will be implemented here.\n\nYou can:\n- View your assigned tasks\n- Update task status\n- Submit task work\n- View task history";
         }
 
-        private async void MyProjectsButton_Click(object sender, RoutedEventArgs e) 
+        private async void MyProjectsButton_Click(object sender, RoutedEventArgs e)
         {
             ShowProjects();
-            await LoadProjectsAsync(); 
-        }
-
-        private void ProfileButton_Click(object sender, RoutedEventArgs e)
+            await LoadProjectsAsync();
+        }        private void ProfileButton_Click(object sender, RoutedEventArgs e)
         {
             ShowProfile();
         }

@@ -20,10 +20,17 @@ namespace Tomany.TaskManagement.DAL.Repositories
             var projectMembers = await _context.ProjectMembers
                                             .Where(pm => pm.AccountId == accountId)
                                             .ToListAsync();
+
+            if (projectMembers.Count == 0)
+            {
+                return new List<Project>();
+            }
+            
             var projectIds = projectMembers.Select(pm => pm.ProjectId).Distinct();
             var projects = await _context.Projects
                                         .Where(p => projectIds.Contains(p.ProjectId))
                                         .ToListAsync();
+            
             return projects;
         }
 
