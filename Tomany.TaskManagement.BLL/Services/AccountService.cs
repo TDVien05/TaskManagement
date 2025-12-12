@@ -156,7 +156,6 @@ public class AccountService : IAccountService
 
     private static bool IsEmailLike(string email)
     {
-        // Simple but stricter than Contains: letters/numbers + @ + domain
         const string pattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
         return Regex.IsMatch(email, pattern, RegexOptions.IgnoreCase);
     }

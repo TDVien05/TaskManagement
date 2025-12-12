@@ -70,7 +70,6 @@ public class EmailService
             throw new InvalidOperationException("SMTP password cannot be empty.");
         }
 
-        // Validate password length (Gmail App Password should be 16 characters)
         if (cleanPassword.Length != 16)
         {
             throw new InvalidOperationException(
@@ -102,16 +101,14 @@ public class EmailService
             };
             
             await client.SendMailAsync(message);
-            return; // Success
+            return;
         }
         catch (SmtpException smtpEx)
         {
             lastException = smtpEx;
-            // Check for specific authentication errors
             if (smtpEx.Message.Contains("5.7.0", StringComparison.OrdinalIgnoreCase) ||
                 smtpEx.Message.Contains("Authentication", StringComparison.OrdinalIgnoreCase))
             {
-                // Will try port 465
             }
             else
             {
@@ -123,7 +120,6 @@ public class EmailService
         catch (Exception ex)
         {
             lastException = ex;
-            // If it's not an authentication error, don't try port 465
             if (!ex.Message.Contains("Authentication", StringComparison.OrdinalIgnoreCase) &&
                 !ex.Message.Contains("5.7.0", StringComparison.OrdinalIgnoreCase))
             {

@@ -21,7 +21,6 @@ namespace Tomany.TaskManagement
             var accountRepo = new Tomany.TaskManagement.DAL.Repositories.AccountRepository(dbContext);
             _accountService = new AccountService(accountRepo);
             
-            // Configure email service (update these with your SMTP credentials)
             var smtpSettings = GetSmtpSettings();
             var emailService = smtpSettings != null ? new EmailService(smtpSettings) : null;
             var otpTtlMinutes = GetOtpTtlMinutes();

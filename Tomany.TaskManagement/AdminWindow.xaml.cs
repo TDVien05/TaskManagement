@@ -78,10 +78,9 @@ namespace Tomany.TaskManagement
 
         private void TasksButton_Click(object sender, RoutedEventArgs e)
         {
-            UserManagementView.Visibility = Visibility.Collapsed;
-            ProjectManagementView.Visibility = Visibility.Collapsed;
-            ManagerRequestsView.Visibility = Visibility.Collapsed;
-            DashboardView.Visibility = Visibility.Visible;
+            var taskBoardWindow = new TaskBoardWindow(AccountId, "Admin", this);
+            taskBoardWindow.Show();
+            this.Hide();
         }
 
         private void ReportsButton_Click(object sender, RoutedEventArgs e)
