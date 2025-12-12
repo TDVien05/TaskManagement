@@ -15,7 +15,7 @@ namespace Tomany.TaskManagement.DAL.Repositories
             _context = context;
         }
 
-        public async Task<IEnumerable<Project>> GetProjectsByAccountIdAsync(int accountId)
+        public async System.Threading.Tasks.Task<IEnumerable<Project>> GetProjectsByAccountIdAsync(int accountId)
         {
             // First, find all ProjectMember entries for the given accountId
             var projectMembers = await _context.ProjectMembers
@@ -33,7 +33,7 @@ namespace Tomany.TaskManagement.DAL.Repositories
             return projects;
         }
 
-        public async Task<Project> GetProjectByIdAsync(int projectId)
+        public async System.Threading.Tasks.Task<Project?> GetProjectByIdAsync(int projectId)
         {
             return await _context.Projects
                                  .Include(p => p.Tasks)

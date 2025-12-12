@@ -6,7 +6,7 @@ namespace Tomany.TaskManagement.DAL.Repositories
 {
     public interface IProjectRepository
     {
-        Task<IEnumerable<Project>> GetProjectsByAccountIdAsync(int accountId);
-        Task<Project> GetProjectByIdAsync(int projectId); 
+        System.Threading.Tasks.Task<IEnumerable<Project>> GetProjectsByAccountIdAsync(int accountId);
+        System.Threading.Tasks.Task<Project?> GetProjectByIdAsync(int projectId); 
     }
 }

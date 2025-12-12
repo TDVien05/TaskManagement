@@ -1,10 +1,12 @@
 using System;
-using System.Collections.ObjectModel; 
-using System.ComponentModel; 
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Data; 
 using Tomany.TaskManagement.BLL.Models;
 using Tomany.TaskManagement.BLL.Services;
+using Tomany.TaskManagement.DAL.Models;
 using Tomany.TaskManagement.DAL.Repositories;
 using TaskManagementContext = Tomany.TaskManagement.DAL.Models.TaskManagementContext;
 
@@ -34,6 +36,12 @@ namespace Tomany.TaskManagement
 
             var projectRepo = new ProjectRepository(dbContext);
             _projectService = new ProjectService(projectRepo);
+
+            // Initialize collections and view to satisfy non-nullable requirements
+            Projects = new ObservableCollection<Project>();
+            _projectsView = CollectionViewSource.GetDefaultView(Projects);
+            _projectsView.Filter = ApplyProjectsFilter;
+            ProjectsListView.ItemsSource = _projectsView;
 
             Loaded += HomeWindow_Loaded;
         }
@@ -104,15 +112,19 @@ namespace Tomany.TaskManagement
         public ObservableCollection<Project> Projects { get; set; } // New Property
         private ICollectionView _projectsView; // New Field
 
-        private async Task LoadProjectsAsync()
+        private async System.Threading.Tasks.Task LoadProjectsAsync()
         {
             try
             {
                 var projectsList = await _projectService.GetProjectsByAccountIdAsync(AccountId);
-                Projects = new ObservableCollection<Project>(projectsList);
-                _projectsView = CollectionViewSource.GetDefaultView(Projects);
-                _projectsView.Filter = ApplyProjectsFilter; // New line
-                ProjectsListView.ItemsSource = _projectsView;
+                Projects.Clear();
+                if (projectsList != null)
+                {
+                    foreach (var project in projectsList)
+                    {
+                        Projects.Add(project);
+                    }
+                }
             }
             catch (Exception ex)
             {
@@ -122,7 +134,7 @@ namespace Tomany.TaskManagement
         }
 
 
-        private async Task LoadProfileAsync()
+        private async System.Threading.Tasks.Task LoadProfileAsync()
         {
             var result = await _profileService.GetProfileAsync(AccountId);
             if (result.Success && result.Data != null)

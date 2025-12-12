@@ -14,12 +14,12 @@ namespace Tomany.TaskManagement.BLL.Services
             _projectRepository = projectRepository;
         }
 
-        public async Task<IEnumerable<Project>> GetProjectsByAccountIdAsync(int accountId)
+        public async System.Threading.Tasks.Task<IEnumerable<Project>> GetProjectsByAccountIdAsync(int accountId)
         {
             return await _projectRepository.GetProjectsByAccountIdAsync(accountId);
         }
 
-        public async Task<Project> GetProjectByIdAsync(int projectId)
+        public async System.Threading.Tasks.Task<Project?> GetProjectByIdAsync(int projectId)
         {
             return await _projectRepository.GetProjectByIdAsync(projectId);
         }
