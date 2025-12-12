@@ -10,4 +10,7 @@
     <ProjectReference Include="..\Tomany.TaskManagement.DAL\Tomany.TaskManagement.DAL.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+  </ItemGroup>
+
 </Project>

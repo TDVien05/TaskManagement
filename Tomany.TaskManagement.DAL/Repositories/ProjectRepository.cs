@@ -82,3 +82,5 @@ namespace Tomany.TaskManagement.DAL.Repositories
                             && pm.RoleInProject != null 
                             && pm.RoleInProject.Equals("Manager", StringComparison.OrdinalIgnoreCase));
         }
+    }
+}
