@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Account = Tomany.TaskManagement.DAL.Models.Account;
@@ -68,6 +70,32 @@ public class AccountRepository : IAccountRepository
         account.Password = newPassword;
         await _context.SaveChangesAsync();
         return true;
+    }
+
+    public async Task<IEnumerable<Account>> GetAllWithProfilesAsync()
+    {
+        return await _context.Accounts
+            .Include(a => a.Profile)
+            .ToListAsync();
+    }
+    public async Task ToggleAccountStatusAsync(int accountId)
+    {
+        var account = await _context.Accounts.FindAsync(accountId);
+        if (account != null)
+        {
+            account.IsActive = !account.IsActive;
+            await _context.SaveChangesAsync();
+        }
+    }
+    
+    public async Task UpdateAccountRoleAsync(int accountId, string newRole)
+    {
+        var account = await _context.Accounts.FindAsync(accountId);
+        if (account != null)
+        {
+            account.Role = newRole;
+            await _context.SaveChangesAsync();
+        }
     }
 }
 

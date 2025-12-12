@@ -1,17 +1,72 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
 using System.Text.RegularExpressions;
 using Tomany.TaskManagement.BLL.Models;
 using Tomany.TaskManagement.DAL.Models;
 using Tomany.TaskManagement.DAL.Repositories;
+using Task = System.Threading.Tasks.Task;
 
 namespace Tomany.TaskManagement.BLL.Services;
 
-public class AccountService
+public class AccountService : IAccountService
 {
     private readonly IAccountRepository _accountRepository;
 
     public AccountService(IAccountRepository accountRepository)
     {
         _accountRepository = accountRepository;
+    }
+
+    public async System.Threading.Tasks.Task<IEnumerable<ProfileDto>> GetAllAsync()
+    {
+        var accounts = await _accountRepository.GetAllWithProfilesAsync();
+        return accounts.Select(a => new ProfileDto
+        {
+            AccountId = a.AccountId,
+            Username = a.Username,
+            Role = a.Role,
+            IsActive = a.IsActive,
+            FirstName = a.Profile?.FirstName,
+            LastName = a.Profile?.LastName,
+            Email = a.Profile?.Email,
+            PhoneNumber = a.Profile?.PhoneNumber,
+            DateOfBirth = a.Profile?.DateOfBirth
+        }).ToList();
+    }
+    
+    public async System.Threading.Tasks.Task<IEnumerable<ProfileDto>> GetUsersByRoleAsync(string role)
+    {
+        var allUsers = await GetAllAsync();
+        return allUsers.Where(u => string.Equals(u.Role, role, StringComparison.OrdinalIgnoreCase));
+    }
+    
+    public async Task ToggleAccountStatusAsync(int accountId)
+    {
+        await _accountRepository.ToggleAccountStatusAsync(accountId);
+    }
+    
+    public async System.Threading.Tasks.Task<string> ResetPasswordAsync(int accountId)
+    {
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+        var random = new Random();
+        var newPassword = new string(Enumerable.Repeat(chars, 8)
+            .Select(s => s[random.Next(s.Length)]).ToArray());
+
+        await _accountRepository.UpdatePasswordAsync(accountId, newPassword);
+
+        return newPassword;
+    }
+    
+    public async Task ApproveRequestAsync(int accountId)
+    {
+        await _accountRepository.UpdateAccountRoleAsync(accountId, "Manager");
+    }
+
+    public async Task RejectRequestAsync(int accountId)
+    {
+        await _accountRepository.UpdateAccountRoleAsync(accountId, "User");
     }
 
     public RegisterResult ValidateRequest(RegisterRequest request)
@@ -54,7 +109,7 @@ public class AccountService
         return Success("Validated.");
     }
 
-    public async Task<RegisterResult> RegisterAsync(RegisterRequest request)
+    public async System.Threading.Tasks.Task<RegisterResult> RegisterAsync(RegisterRequest request)
     {
         var validation = ValidateRequest(request);
         if (!validation.Success)
@@ -85,7 +140,7 @@ public class AccountService
                 Email = string.IsNullOrWhiteSpace(request.Email) ? null : request.Email.Trim(),
                 PhoneNumber = string.IsNullOrWhiteSpace(request.PhoneNumber) ? null : request.PhoneNumber.Trim(),
                 DateOfBirth = request.DateOfBirth.HasValue
-                    ? DateOnly.FromDateTime(request.DateOfBirth.Value)
+                    ? System.DateOnly.FromDateTime(request.DateOfBirth.Value)
                     : null
             };
 
@@ -93,7 +148,7 @@ public class AccountService
 
             return Success("Registration succeeded.", accountId);
         }
-        catch (Exception ex)
+        catch (System.Exception ex)
         {
             return Fail($"System error: {ex.Message}");
         }
@@ -101,7 +156,6 @@ public class AccountService
 
     private static bool IsEmailLike(string email)
     {
-        // Simple but stricter than Contains: letters/numbers + @ + domain
         const string pattern = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
         return Regex.IsMatch(email, pattern, RegexOptions.IgnoreCase);
     }

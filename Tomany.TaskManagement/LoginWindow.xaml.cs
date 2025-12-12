@@ -1,8 +1,6 @@
 using System.Windows;
 using Tomany.TaskManagement.BLL.Models;
 using Tomany.TaskManagement.BLL.Services;
-using Tomany.TaskManagement.DAL.Models;
-using Tomany.TaskManagement.DAL.Repositories;
 
 namespace Tomany.TaskManagement
 {
@@ -14,9 +12,7 @@ namespace Tomany.TaskManagement
         public LoginWindow()
         {
             InitializeComponent();
-            var dbContext = new TaskManagementContext();
-            var accountRepo = new AccountRepository(dbContext);
-            _loginService = new LoginService(accountRepo);
+            _loginService = ServiceFactory.CreateLoginService();
         }
 
         private async void LoginButton_Click(object sender, RoutedEventArgs e)
@@ -42,7 +38,6 @@ namespace Tomany.TaskManagement
             {
                 UpdateStatus($"Welcome, {result.Username}!");
                 
-                // Navigate based on role
                 var role = result.Role?.ToLower() ?? string.Empty;
                 if (role == "admin")
                 {
