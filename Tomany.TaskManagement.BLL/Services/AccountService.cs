@@ -69,6 +69,28 @@ public class AccountService : IAccountService
         await _accountRepository.UpdateAccountRoleAsync(accountId, "User");
     }
 
+    public async System.Threading.Tasks.Task<OperationResult> RequestManagerRoleAsync(int accountId)
+    {
+        var account = (await _accountRepository.GetAllWithProfilesAsync()).FirstOrDefault(a => a.AccountId == accountId);
+        if (account == null)
+        {
+            return new OperationResult { Success = false, Message = "User account not found." };
+        }
+        
+        if (string.Equals(account.Role, "User", StringComparison.OrdinalIgnoreCase))
+        {
+            await _accountRepository.UpdateAccountRoleAsync(accountId, "Applicant");
+            return new OperationResult { Success = true, Message = "Your request to become a Manager has been submitted for approval." };
+        }
+        
+        if (string.Equals(account.Role, "Applicant", StringComparison.OrdinalIgnoreCase))
+        {
+            return new OperationResult { Success = false, Message = "You have already submitted a request." };
+        }
+
+        return new OperationResult { Success = false, Message = "Only Users can request to become a Manager." };
+    }
+
     public RegisterResult ValidateRequest(RegisterRequest request)
     {
         if (string.IsNullOrWhiteSpace(request.Username))

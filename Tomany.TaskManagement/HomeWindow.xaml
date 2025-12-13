@@ -4,10 +4,14 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Tomany.TaskManagement"
+        xmlns:converters="clr-namespace:Tomany.TaskManagement.Converters"
         mc:Ignorable="d"
         Title="Task Management - Home" Height="700" Width="1000"
         WindowStartupLocation="CenterScreen"
         ResizeMode="CanResize">
+    <Window.Resources>
+        <converters:StatusToColorConverter x:Key="StatusToColorConverter"/>
+    </Window.Resources>
     <Grid>
         <Grid.Background>
             <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
@@ -153,16 +157,39 @@
                                 </StackPanel>
                             </Border>
 
-                            <!-- Filter Controls (New) -->
-                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
-                                <TextBox x:Name="ProjectSearchTextBox" Width="200" Height="32" Padding="5"
-                                         VerticalContentAlignment="Center"
-                                         Background="#f3fff8" BorderBrush="#9bd7b3" BorderThickness="1"
-                                         Text="Search projects..." FontStyle="Italic" Foreground="#999"
-                                         GotFocus="ProjectSearchTextBox_GotFocus" LostFocus="ProjectSearchTextBox_LostFocus"
-                                         TextChanged="ProjectSearchTextBox_TextChanged"/>
-                                <!-- ComboBox for status can be added here later -->
-                            </StackPanel>
+
+                            <!-- Filter Controls with Icon -->
+                            <Grid Margin="0,0,0,10" HorizontalAlignment="Left">
+                                <!-- Search Box Container -->
+                                <Border Background="#f3fff8" BorderBrush="#9bd7b3" BorderThickness="1" 
+                                        CornerRadius="4" Width="280" Height="32">
+                                    <Grid>
+                                        <!-- Search Icon -->
+                                        <Path Data="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"
+                              Fill="#9bd7b3" Width="16" Height="16" Stretch="Uniform"
+                              HorizontalAlignment="Left" VerticalAlignment="Center" 
+                              Margin="8,0,0,0" IsHitTestVisible="False"/>
+                                        
+                                        <!-- TextBox -->
+                                        <TextBox x:Name="ProjectSearchTextBox" 
+                                                 Padding="30,5,30,5" Background="Transparent" BorderThickness="0"
+                                                 VerticalContentAlignment="Center"
+                                                 Text="Search projects..." FontStyle="Italic" Foreground="#999"
+                                                 GotFocus="ProjectSearchTextBox_GotFocus" 
+                                                 LostFocus="ProjectSearchTextBox_LostFocus"
+                                                 TextChanged="ProjectSearchTextBox_TextChanged"/>
+                                        
+                                        <!-- Clear Button (X) -->
+                                        <Button x:Name="ClearSearchButton" Content="×" 
+                                                Width="20" Height="20" FontSize="16" FontWeight="Bold"
+                                                Background="Transparent" BorderThickness="0" 
+                                                Foreground="#9bd7b3" Cursor="Hand"
+                                                HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,5,0"
+                                                Visibility="Collapsed" Click="ClearSearchButton_Click"
+                                                ToolTip="Clear search"/>
+                                    </Grid>
+                                </Border>
+                            </Grid>
 
                             <ListView x:Name="ProjectsListView"
                                       Background="Transparent"
@@ -185,6 +212,13 @@
                                                             Padding="{TemplateBinding Padding}">
                                                         <ContentPresenter/>
                                                     </Border>
+                                                    <ControlTemplate.Triggers>
+                                                        <!-- Hover effect -->
+                                                        <Trigger Property="IsMouseOver" Value="True">
+                                                            <Setter TargetName="Border" Property="Background" Value="#e6f9ed"/>
+                                                            <Setter Property="Cursor" Value="Hand"/>
+                                                        </Trigger>
+                                                    </ControlTemplate.Triggers>
                                                 </ControlTemplate>
                                             </Setter.Value>
                                         </Setter>
@@ -208,10 +242,13 @@
                                                                TextWrapping="Wrap"/>
                                                     <TextBlock Text="{Binding ProjectDescription}"
                                                                FontSize="14" Foreground="#52725b" Margin="0,5,0,0"
-                                                               TextWrapping="Wrap" MaxHeight="60" TextTrimming="CharacterEllipsis"/>
+                                                               TextWrapping="Wrap" MaxHeight="60" TextTrimming="CharacterEllipsis"
+                                                               ToolTip="{Binding ProjectDescription}"/>
                                                     <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                                                         <TextBlock Text="Status: " FontWeight="SemiBold" Foreground="#0f7f3c"/>
-                                                        <TextBlock Text="{Binding ProjectStatus}" Foreground="#52725b"/>
+                                                        <TextBlock Text="{Binding ProjectStatus}" 
+                                                                   Foreground="{Binding ProjectStatus, Converter={StaticResource StatusToColorConverter}}"
+                                                                   FontWeight="SemiBold"/>
                                                     </StackPanel>
                                                     <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
                                                         <TextBlock Text="Created: " FontWeight="SemiBold" Foreground="#0f7f3c"/>
@@ -219,8 +256,8 @@
                                                     </StackPanel>
                                                 </StackPanel>
                                                 <StackPanel Grid.Column="1" HorizontalAlignment="Right" VerticalAlignment="Center">
-                                                    <TextBlock Text="Due Date" FontSize="12" Foreground="#0f7f3c" HorizontalAlignment="Center"/>
-                                                    <TextBlock Text="{Binding DueDate, StringFormat='{}{0:dd/MM}'}"
+                                                    <TextBlock Text="Updated" FontSize="12" Foreground="#0f7f3c" HorizontalAlignment="Center"/>
+                                                    <TextBlock Text="{Binding UpdateAt, StringFormat='{}{0:dd/MM}'}"
                                                                FontSize="16" FontWeight="Bold" Foreground="#16a34a"
                                                                HorizontalAlignment="Center"/>
                                                 </StackPanel>
@@ -229,6 +266,21 @@
                                     </DataTemplate>
                                 </ListView.ItemTemplate>
                             </ListView>
+
+                            <!-- Empty State -->
+                            <Border x:Name="EmptyStatePanel" Visibility="Collapsed"
+                                    Background="#f7fff9" CornerRadius="8" Padding="60,40"
+                                    BorderBrush="#d9f3e4" BorderThickness="1" Margin="0,10,0,0">
+                                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center">
+                                    <TextBlock Text="📁" FontSize="64" HorizontalAlignment="Center" Margin="0,0,0,15"/>
+                                    <TextBlock x:Name="EmptyStateMessage" Text="No projects found" 
+                                               FontSize="18" FontWeight="SemiBold" Foreground="#0f7f3c"
+                                               HorizontalAlignment="Center"/>
+                                    <TextBlock Text="Try adjusting your search or create a new project" 
+                                               FontSize="14" Foreground="#52725b" Margin="0,8,0,0"
+                                               HorizontalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
                         </StackPanel>
 
                         <!-- Profile -->
@@ -312,6 +364,25 @@
                                     HorizontalAlignment="Left" Click="ChangePasswordButton_Click"
                                     Background="#0f7f3c" Foreground="White"/>
 
+                            <Separator Margin="0,20,0,20" />
+
+                            <!-- Request Manager Button (for Users) -->
+                            <Button x:Name="RequestManagerButton" Content="Request to be Manager" Width="200" Height="34"
+                                    HorizontalAlignment="Left" Click="RequestManagerButton_Click"
+                                    Background="#16a34a" Foreground="White" Visibility="Collapsed"/>
+
+                            <!-- Pending Badge (for Applicants) -->
+                            <Border x:Name="PendingManagerBadge" Background="#fef3c7" BorderBrush="#f59e0b" 
+                                    BorderThickness="2" CornerRadius="6" Padding="12,8" Width="250"
+                                    HorizontalAlignment="Left" Visibility="Collapsed">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock Text="⏳" FontSize="18" Margin="0,0,8,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Manager Request Pending" 
+                                               Foreground="#92400e" FontWeight="SemiBold" FontSize="14"
+                                               VerticalAlignment="Center"/>
+                                </StackPanel>
+                            </Border>
+
                             <TextBlock x:Name="StatusTextBlock" Foreground="#52725b" TextWrapping="Wrap" Margin="0,6,0,0"/>
                         </StackPanel>
 
@@ -328,6 +399,46 @@
                                        FontSize="22" FontWeight="Bold" Foreground="#0f7f3c" Margin="0,0,0,5"/>
                             <TextBlock x:Name="ProjectDetailDescriptionTextBlock" Text="Project description goes here..."
                                        FontSize="14" Foreground="#52725b" TextWrapping="Wrap" Margin="0,0,0,15"/>
+
+                            <!-- Project Metadata Cards -->
+                            <Grid Margin="0,0,0,20">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                    <ColumnDefinition Width="*"/>
+                                </Grid.ColumnDefinitions>
+                                
+                                <!-- Status Card -->
+                                <Border Grid.Column="0" Background="#f3fff8" CornerRadius="8"
+                                        Padding="15" Margin="0,0,5,0" BorderBrush="#9bd7b3" BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock Text="Status" FontSize="12" Foreground="#52725b"/>
+                                        <TextBlock x:Name="ProjectDetailStatusTextBlock" Text="In Progress" 
+                                                   FontSize="16" FontWeight="Bold" Margin="0,5,0,0"
+                                                   Foreground="{Binding Text, RelativeSource={RelativeSource Self}, Converter={StaticResource StatusToColorConverter}}"/>
+                                    </StackPanel>
+                                </Border>
+                                
+                                <!-- Created Date Card -->
+                                <Border Grid.Column="1" Background="#f3fff8" CornerRadius="8"
+                                        Padding="15" Margin="5,0,5,0" BorderBrush="#9bd7b3" BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock Text="Created" FontSize="12" Foreground="#52725b"/>
+                                        <TextBlock x:Name="ProjectDetailCreatedTextBlock" Text="01/12/2025" 
+                                                   FontSize="16" FontWeight="Bold" Foreground="#0f7f3c" Margin="0,5,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                                
+                                <!-- Last Updated Card -->
+                                <Border Grid.Column="2" Background="#f3fff8" CornerRadius="8"
+                                        Padding="15" Margin="5,0,0,0" BorderBrush="#9bd7b3" BorderThickness="1">
+                                    <StackPanel>
+                                        <TextBlock Text="Last Updated" FontSize="12" Foreground="#52725b"/>
+                                        <TextBlock x:Name="ProjectDetailDueDateTextBlock" Text="15/12/2025" 
+                                                   FontSize="16" FontWeight="Bold" Foreground="#16a34a" Margin="0,5,0,0"/>
+                                    </StackPanel>
+                                </Border>
+                            </Grid>
 
                             <!-- Tasks List -->
                             <TextBlock Text="Tasks in this Project" FontSize="18" FontWeight="Bold" Foreground="#0f7f3c" Margin="0,10,0,10"/>

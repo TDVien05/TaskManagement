@@ -3,7 +3,7 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Data; 
+using System.Windows.Data;
 using Microsoft.EntityFrameworkCore;
 using Tomany.TaskManagement.BLL.Models;
 using Tomany.TaskManagement.BLL.Services;
@@ -18,7 +18,8 @@ namespace Tomany.TaskManagement
         public int AccountId { get; set; }
         public string Username { get; set; } = string.Empty;
         private readonly ProfileService _profileService;
-        private readonly ProjectService _projectService; 
+        private readonly ProjectService _projectService;
+        private readonly IAccountService _accountService;
         private ProfileDto? _currentProfile;
         private bool _isSavingProfile;
         private bool _isChangingPassword;
@@ -34,6 +35,7 @@ namespace Tomany.TaskManagement
             // Use the ServiceFactory to get service instances
             _profileService = ServiceFactory.CreateProfileService();
             _projectService = ServiceFactory.CreateProjectService();
+            _accountService = ServiceFactory.CreateAccountService();
 
             // Initialize collections and view to satisfy non-nullable requirements
             Projects = new ObservableCollection<Project>();
@@ -47,6 +49,7 @@ namespace Tomany.TaskManagement
         private async void HomeWindow_Loaded(object sender, RoutedEventArgs e)
         {
             await LoadProfileAsync();
+            await LoadProjectsAsync(); // Load projects on startup
             ShowDashboard();
         }
 
@@ -68,7 +71,8 @@ namespace Tomany.TaskManagement
         {
             ShowProjects();
             await LoadProjectsAsync();
-        }        private void ProfileButton_Click(object sender, RoutedEventArgs e)
+        }
+        private void ProfileButton_Click(object sender, RoutedEventArgs e)
         {
             ShowProfile();
         }
@@ -114,13 +118,19 @@ namespace Tomany.TaskManagement
             {
                 var projectsList = await _projectService.GetProjectsByAccountIdAsync(AccountId);
                 Projects.Clear();
+                int projectCount = 0;
                 if (projectsList != null)
                 {
-                    foreach (var project in projectsList)
+                    var projectListAsList = projectsList.ToList();
+                    projectCount = projectListAsList.Count;
+                    foreach (var project in projectListAsList)
                     {
                         Projects.Add(project);
                     }
                 }
+                // Update the count on both dashboard and project section cards
+                MyProjectsCountTextBlock.Text = projectCount.ToString();
+                ProjectProjectsCountTextBlock.Text = projectCount.ToString();
             }
             catch (Exception ex)
             {
@@ -158,6 +168,23 @@ namespace Tomany.TaskManagement
             PhoneTextBox.Text = _currentProfile.PhoneNumber ?? string.Empty;
             DobPicker.SelectedDate = _currentProfile.DateOfBirth?.ToDateTime(TimeOnly.MinValue);
             StatusTextBlock.Text = string.Empty;
+
+            // Show/hide Request Manager button or Pending badge based on role
+            if (string.Equals(_currentProfile.Role, "User", StringComparison.OrdinalIgnoreCase))
+            {
+                RequestManagerButton.Visibility = Visibility.Visible;
+                PendingManagerBadge.Visibility = Visibility.Collapsed;
+            }
+            else if (string.Equals(_currentProfile.Role, "Applicant", StringComparison.OrdinalIgnoreCase))
+            {
+                RequestManagerButton.Visibility = Visibility.Collapsed;
+                PendingManagerBadge.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                RequestManagerButton.Visibility = Visibility.Collapsed;
+                PendingManagerBadge.Visibility = Visibility.Collapsed;
+            }
         }
 
         private void UpdateProfileSummary()
@@ -276,6 +303,22 @@ namespace Tomany.TaskManagement
             {
                 _projectsView.Refresh();
             }
+
+            // Show/hide clear button
+            if (!string.IsNullOrWhiteSpace(ProjectSearchTextBox.Text) &&
+                ProjectSearchTextBox.Text != "Search projects...")
+            {
+                if (ClearSearchButton != null)
+                    ClearSearchButton.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                if (ClearSearchButton != null)
+                    ClearSearchButton.Visibility = Visibility.Collapsed;
+            }
+
+            // Update empty state
+            UpdateEmptyState();
         }
 
         private bool ApplyProjectsFilter(object item)
@@ -293,6 +336,45 @@ namespace Tomany.TaskManagement
                        (project.ProjectDescription != null && project.ProjectDescription.ToLower().Contains(searchText));
             }
             return false;
+        }
+
+        private void ClearSearchButton_Click(object sender, RoutedEventArgs e)
+        {
+            ProjectSearchTextBox.Text = string.Empty;
+            ProjectSearchTextBox.Focus();
+        }
+
+        private void UpdateEmptyState()
+        {
+            if (_projectsView != null && EmptyStatePanel != null && ProjectsListView != null)
+            {
+                bool hasProjects = _projectsView.Cast<object>().Any();
+
+                if (hasProjects)
+                {
+                    ProjectsListView.Visibility = Visibility.Visible;
+                    EmptyStatePanel.Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    ProjectsListView.Visibility = Visibility.Collapsed;
+                    EmptyStatePanel.Visibility = Visibility.Visible;
+
+                    // Update message based on search
+                    if (EmptyStateMessage != null)
+                    {
+                        if (!string.IsNullOrWhiteSpace(ProjectSearchTextBox.Text) &&
+                            ProjectSearchTextBox.Text != "Search projects...")
+                        {
+                            EmptyStateMessage.Text = "No projects found";
+                        }
+                        else
+                        {
+                            EmptyStateMessage.Text = "No projects yet";
+                        }
+                    }
+                }
+            }
         }
 
         // --- Project Detail View Logic ---
@@ -323,6 +405,12 @@ namespace Tomany.TaskManagement
                 {
                     ProjectDetailNameTextBlock.Text = projectDetails.ProjectName;
                     ProjectDetailDescriptionTextBlock.Text = projectDetails.ProjectDescription;
+
+                    // Populate metadata cards
+                    ProjectDetailStatusTextBlock.Text = projectDetails.ProjectStatus;
+                    ProjectDetailCreatedTextBlock.Text = projectDetails.CreateAt?.ToString("dd/MM/yyyy") ?? "N/A";
+                    ProjectDetailDueDateTextBlock.Text = projectDetails.UpdateAt?.ToString("dd/MM/yyyy") ?? "N/A";
+
                     TasksListView.ItemsSource = projectDetails.Tasks;
                     MembersItemsControl.ItemsSource = projectDetails.ProjectMembers;
 
@@ -332,6 +420,20 @@ namespace Tomany.TaskManagement
                 {
                     MessageBox.Show("Could not load project details.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
+            }
+        }
+
+        private async void RequestManagerButton_Click(object sender, RoutedEventArgs e)
+        {
+            var result = MessageBox.Show("Are you sure you want to request to become a Manager?", "Confirm Request", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (result == MessageBoxResult.Yes)
+            {
+                StatusTextBlock.Text = "Submitting request...";
+                var operationResult = await _accountService.RequestManagerRoleAsync(AccountId);
+                StatusTextBlock.Text = operationResult.Message;
+
+                // After request, refresh user profile to update button visibility and role status
+                await LoadProfileAsync();
             }
         }
     }
