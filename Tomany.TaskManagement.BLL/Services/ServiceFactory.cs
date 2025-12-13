@@ -52,6 +52,13 @@ public class ServiceFactory
         return new ProjectService(projectRepository);
     }
 
+    public static ProfileService CreateProfileService()
+    {
+        var context = GetContext();
+        var accountRepository = new AccountRepository(context);
+        return new ProfileService(accountRepository);
+    }
+
     public static EmailService CreateEmailService(SmtpSettings? smtpSettings = null)
     {
         return new EmailService(smtpSettings);
