@@ -13,5 +13,6 @@ namespace Tomany.TaskManagement.BLL.Services
         Task<string> ResetPasswordAsync(int accountId);
         System.Threading.Tasks.Task ApproveRequestAsync(int accountId);
         System.Threading.Tasks.Task RejectRequestAsync(int accountId);
+        System.Threading.Tasks.Task<OperationResult> RequestManagerRoleAsync(int accountId);
     }
 }

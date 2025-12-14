@@ -30,13 +30,16 @@ public partial class TaskManagementContext : DbContext
 
     public virtual DbSet<UserActivityLog> UserActivityLogs { get; set; }
 
-    private string? GetConnectionString()
+    private string GetConnectionString()
     {
         IConfiguration config = new ConfigurationBuilder()
              .SetBasePath(Directory.GetCurrentDirectory())
-                    .AddJsonFile("appsettings.json", true, true)
-                    .Build();
-        var strConn = config["ConnectionStrings:DefaultConnection"];
+             .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
+             .AddEnvironmentVariables() // Add environment variables as a configuration source
+             .Build();
+        
+        // Use GetConnectionString extension method to retrieve from "ConnectionStrings" section
+        var strConn = config.GetConnectionString("DefaultConnection");
 
         return strConn;
     }

@@ -1,8 +1,13 @@
 using System;
+using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Windows.Data;
+using Microsoft.EntityFrameworkCore;
 using Tomany.TaskManagement.BLL.Models;
 using Tomany.TaskManagement.BLL.Services;
+using Tomany.TaskManagement.DAL.Models;
 using Tomany.TaskManagement.DAL.Repositories;
 using TaskManagementContext = Tomany.TaskManagement.DAL.Models.TaskManagementContext;
 
@@ -13,6 +18,8 @@ namespace Tomany.TaskManagement
         public int AccountId { get; set; }
         public string Username { get; set; } = string.Empty;
         private readonly ProfileService _profileService;
+        private readonly ProjectService _projectService;
+        private readonly IAccountService _accountService;
         private ProfileDto? _currentProfile;
         private bool _isSavingProfile;
         private bool _isChangingPassword;
@@ -25,9 +32,16 @@ namespace Tomany.TaskManagement
             WelcomeTextBlock.Text = $"Welcome back, {username}!";
             UserInfoTextBlock.Text = username;
 
-            var dbContext = new TaskManagementContext();
-            var accountRepo = new AccountRepository(dbContext);
-            _profileService = new ProfileService(accountRepo);
+            // Use the ServiceFactory to get service instances
+            _profileService = ServiceFactory.CreateProfileService();
+            _projectService = ServiceFactory.CreateProjectService();
+            _accountService = ServiceFactory.CreateAccountService();
+
+            // Initialize collections and view to satisfy non-nullable requirements
+            Projects = new ObservableCollection<Project>();
+            _projectsView = CollectionViewSource.GetDefaultView(Projects);
+            _projectsView.Filter = ApplyProjectsFilter;
+            ProjectsListView.ItemsSource = _projectsView;
 
             Loaded += HomeWindow_Loaded;
         }
@@ -35,6 +49,7 @@ namespace Tomany.TaskManagement
         private async void HomeWindow_Loaded(object sender, RoutedEventArgs e)
         {
             await LoadProfileAsync();
+            await LoadProjectsAsync(); // Load projects on startup
             ShowDashboard();
         }
 
@@ -52,11 +67,11 @@ namespace Tomany.TaskManagement
             ContentTextBlock.Text = "Your tasks functionality will be implemented here.\n\nYou can:\n- View your assigned tasks\n- Update task status\n- Submit task work\n- View task history";
         }
 
-        private void MyProjectsButton_Click(object sender, RoutedEventArgs e)
+        private async void MyProjectsButton_Click(object sender, RoutedEventArgs e)
         {
             ShowProjects();
+            await LoadProjectsAsync();
         }
-
         private void ProfileButton_Click(object sender, RoutedEventArgs e)
         {
             ShowProfile();
@@ -94,7 +109,38 @@ namespace Tomany.TaskManagement
             ApplyProfileToForm();
         }
 
-        private async Task LoadProfileAsync()
+        public ObservableCollection<Project> Projects { get; set; } // New Property
+        private ICollectionView _projectsView; // New Field
+
+        private async System.Threading.Tasks.Task LoadProjectsAsync()
+        {
+            try
+            {
+                var projectsList = await _projectService.GetProjectsByAccountIdAsync(AccountId);
+                Projects.Clear();
+                int projectCount = 0;
+                if (projectsList != null)
+                {
+                    var projectListAsList = projectsList.ToList();
+                    projectCount = projectListAsList.Count;
+                    foreach (var project in projectListAsList)
+                    {
+                        Projects.Add(project);
+                    }
+                }
+                // Update the count on both dashboard and project section cards
+                MyProjectsCountTextBlock.Text = projectCount.ToString();
+                ProjectProjectsCountTextBlock.Text = projectCount.ToString();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error loading projects: {ex.Message}", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                // Optionally log the error
+            }
+        }
+
+
+        private async System.Threading.Tasks.Task LoadProfileAsync()
         {
             var result = await _profileService.GetProfileAsync(AccountId);
             if (result.Success && result.Data != null)
@@ -122,6 +168,23 @@ namespace Tomany.TaskManagement
             PhoneTextBox.Text = _currentProfile.PhoneNumber ?? string.Empty;
             DobPicker.SelectedDate = _currentProfile.DateOfBirth?.ToDateTime(TimeOnly.MinValue);
             StatusTextBlock.Text = string.Empty;
+
+            // Show/hide Request Manager button or Pending badge based on role
+            if (string.Equals(_currentProfile.Role, "User", StringComparison.OrdinalIgnoreCase))
+            {
+                RequestManagerButton.Visibility = Visibility.Visible;
+                PendingManagerBadge.Visibility = Visibility.Collapsed;
+            }
+            else if (string.Equals(_currentProfile.Role, "Applicant", StringComparison.OrdinalIgnoreCase))
+            {
+                RequestManagerButton.Visibility = Visibility.Collapsed;
+                PendingManagerBadge.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                RequestManagerButton.Visibility = Visibility.Collapsed;
+                PendingManagerBadge.Visibility = Visibility.Collapsed;
+            }
         }
 
         private void UpdateProfileSummary()
@@ -211,6 +274,167 @@ namespace Tomany.TaskManagement
 
             ChangePasswordButton.IsEnabled = true;
             _isChangingPassword = false;
+        }
+
+        // --- Filter Logic for Projects ---
+        private void ProjectSearchTextBox_GotFocus(object sender, RoutedEventArgs e)
+        {
+            if (ProjectSearchTextBox.Text == "Search projects..." && ProjectSearchTextBox.FontStyle == FontStyles.Italic)
+            {
+                ProjectSearchTextBox.Text = "";
+                ProjectSearchTextBox.FontStyle = FontStyles.Normal;
+                ProjectSearchTextBox.Foreground = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#52725b");
+            }
+        }
+
+        private void ProjectSearchTextBox_LostFocus(object sender, RoutedEventArgs e)
+        {
+            if (string.IsNullOrWhiteSpace(ProjectSearchTextBox.Text))
+            {
+                ProjectSearchTextBox.Text = "Search projects...";
+                ProjectSearchTextBox.FontStyle = FontStyles.Italic;
+                ProjectSearchTextBox.Foreground = (System.Windows.Media.Brush)new System.Windows.Media.BrushConverter().ConvertFromString("#999");
+            }
+        }
+
+        private void ProjectSearchTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
+        {
+            if (_projectsView != null)
+            {
+                _projectsView.Refresh();
+            }
+
+            // Show/hide clear button
+            if (!string.IsNullOrWhiteSpace(ProjectSearchTextBox.Text) &&
+                ProjectSearchTextBox.Text != "Search projects...")
+            {
+                if (ClearSearchButton != null)
+                    ClearSearchButton.Visibility = Visibility.Visible;
+            }
+            else
+            {
+                if (ClearSearchButton != null)
+                    ClearSearchButton.Visibility = Visibility.Collapsed;
+            }
+
+            // Update empty state
+            UpdateEmptyState();
+        }
+
+        private bool ApplyProjectsFilter(object item)
+        {
+            if (item is Project project)
+            {
+                string searchText = ProjectSearchTextBox.Text.ToLower();
+
+                if (string.IsNullOrWhiteSpace(searchText) || searchText == "search projects...")
+                {
+                    return true; // No filter applied
+                }
+
+                return project.ProjectName.ToLower().Contains(searchText) ||
+                       (project.ProjectDescription != null && project.ProjectDescription.ToLower().Contains(searchText));
+            }
+            return false;
+        }
+
+        private void ClearSearchButton_Click(object sender, RoutedEventArgs e)
+        {
+            ProjectSearchTextBox.Text = string.Empty;
+            ProjectSearchTextBox.Focus();
+        }
+
+        private void UpdateEmptyState()
+        {
+            if (_projectsView != null && EmptyStatePanel != null && ProjectsListView != null)
+            {
+                bool hasProjects = _projectsView.Cast<object>().Any();
+
+                if (hasProjects)
+                {
+                    ProjectsListView.Visibility = Visibility.Visible;
+                    EmptyStatePanel.Visibility = Visibility.Collapsed;
+                }
+                else
+                {
+                    ProjectsListView.Visibility = Visibility.Collapsed;
+                    EmptyStatePanel.Visibility = Visibility.Visible;
+
+                    // Update message based on search
+                    if (EmptyStateMessage != null)
+                    {
+                        if (!string.IsNullOrWhiteSpace(ProjectSearchTextBox.Text) &&
+                            ProjectSearchTextBox.Text != "Search projects...")
+                        {
+                            EmptyStateMessage.Text = "No projects found";
+                        }
+                        else
+                        {
+                            EmptyStateMessage.Text = "No projects yet";
+                        }
+                    }
+                }
+            }
+        }
+
+        // --- Project Detail View Logic ---
+        private void ShowProjectDetailView()
+        {
+            ProjectsSection.Visibility = Visibility.Collapsed;
+            ProjectDetailSection.Visibility = Visibility.Visible;
+            ContentTitleTextBlock.Text = "Project Details";
+        }
+
+        private void HideProjectDetailView()
+        {
+            ProjectDetailSection.Visibility = Visibility.Collapsed;
+            ShowProjects(); // Re-show the projects list
+        }
+
+        private void BackToProjectsButton_Click(object sender, RoutedEventArgs e)
+        {
+            HideProjectDetailView();
+        }
+
+        private async void ProjectsListView_MouseDoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            if (ProjectsListView.SelectedItem is Project selectedProject)
+            {
+                var projectDetails = await _projectService.GetProjectByIdAsync(selectedProject.ProjectId);
+                if (projectDetails != null)
+                {
+                    ProjectDetailNameTextBlock.Text = projectDetails.ProjectName;
+                    ProjectDetailDescriptionTextBlock.Text = projectDetails.ProjectDescription;
+
+                    // Populate metadata cards
+                    ProjectDetailStatusTextBlock.Text = projectDetails.ProjectStatus;
+                    ProjectDetailCreatedTextBlock.Text = projectDetails.CreateAt?.ToString("dd/MM/yyyy") ?? "N/A";
+                    ProjectDetailDueDateTextBlock.Text = projectDetails.UpdateAt?.ToString("dd/MM/yyyy") ?? "N/A";
+
+                    TasksListView.ItemsSource = projectDetails.Tasks;
+                    MembersItemsControl.ItemsSource = projectDetails.ProjectMembers;
+
+                    ShowProjectDetailView();
+                }
+                else
+                {
+                    MessageBox.Show("Could not load project details.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+            }
+        }
+
+        private async void RequestManagerButton_Click(object sender, RoutedEventArgs e)
+        {
+            var result = MessageBox.Show("Are you sure you want to request to become a Manager?", "Confirm Request", MessageBoxButton.YesNo, MessageBoxImage.Question);
+            if (result == MessageBoxResult.Yes)
+            {
+                StatusTextBlock.Text = "Submitting request...";
+                var operationResult = await _accountService.RequestManagerRoleAsync(AccountId);
+                StatusTextBlock.Text = operationResult.Message;
+
+                // After request, refresh user profile to update button visibility and role status
+                await LoadProfileAsync();
+            }
         }
     }
 }
